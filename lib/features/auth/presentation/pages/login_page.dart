@@ -17,6 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   final _nameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _registerEmailController = TextEditingController();
+  final _roleController = TextEditingController();
   final _registerPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
@@ -24,6 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   bool _showLoginPassword = false;
+  String? _selectedImagePath;
 
   @override
   void dispose() {
@@ -32,6 +34,7 @@ class _LoginPageState extends State<LoginPage> {
     _nameController.dispose();
     _usernameController.dispose();
     _registerEmailController.dispose();
+    _roleController.dispose();
     _registerPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -196,6 +199,53 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ] else ...[
                 // Formulario de Registro
+                // Selector de imagen
+                Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      // TODO: Implementar selección de imagen
+                      // Por ahora solo muestra un placeholder
+                    },
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF4A2C1A), // Marrón oscuro
+                          width: 2,
+                        ),
+                        color: Colors.white,
+                      ),
+                      child: _selectedImagePath != null
+                          ? ClipOval(
+                              child: Image.asset(
+                                _selectedImagePath!,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.camera_alt,
+                                  color: Color(0xFF4A2C1A),
+                                  size: 32,
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Foto',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF5A5A5A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 _CustomTextField(
                   controller: _nameController,
                   label: 'Nombre',
@@ -212,6 +262,12 @@ class _LoginPageState extends State<LoginPage> {
                   controller: _registerEmailController,
                   label: 'Correo electrónico',
                   keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                _CustomTextField(
+                  controller: _roleController,
+                  label: 'Rol',
+                  keyboardType: TextInputType.text,
                 ),
                 const SizedBox(height: 16),
                 _CustomTextField(

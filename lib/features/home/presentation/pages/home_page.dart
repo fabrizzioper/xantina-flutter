@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../team/presentation/pages/team_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -128,7 +129,7 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(width: 16),
                   const Expanded(
                     child: Text(
-                      'Tap plus to create a new task',
+                      'Toca el más para crear una nueva tarea',
                       style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF5A5A5A), // Gris oscuro
@@ -141,7 +142,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 24),
             // Card de Report - Ancho completo
             _InfoCard(
-              title: 'Report',
+              title: 'Reporte',
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -201,7 +202,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
             // Card de Team Members - Ancho completo
             _InfoCard(
-              title: 'Team Members',
+              title: 'Miembros del Equipo',
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,13 +287,13 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
             // Card de Alerts
             _InfoCard(
-              title: 'Alerts',
+              title: 'Alertas',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
                   const Text(
-                    'Today',
+                    'Hoy',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF5A5A5A),
@@ -301,17 +302,17 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 12),
                   _AlertItem(
-                    title: 'New Lot Alert!',
+                    title: '¡Alerta de Nuevo Lote!',
                     message:
                         'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-                    time: '30 mins ago',
+                    time: 'Hace 30 min',
                   ),
                   const SizedBox(height: 12),
                   _AlertItem(
-                    title: 'New Lot Alert!',
+                    title: '¡Alerta de Nuevo Lote!',
                     message:
                         'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-                    time: '30 mins ago',
+                    time: 'Hace 30 min',
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -341,7 +342,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               _BottomNavItem(
                 icon: Icons.home,
-                label: 'Home',
+                label: 'Inicio',
                 isActive: _currentIndex == 0,
                 onTap: () {
                   setState(() {
@@ -351,17 +352,19 @@ class _HomePageState extends State<HomePage> {
               ),
               _BottomNavItem(
                 icon: Icons.people,
-                label: 'Team',
+                label: 'Equipo',
                 isActive: _currentIndex == 1,
                 onTap: () {
-                  setState(() {
-                    _currentIndex = 1;
-                  });
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const TeamPage(),
+                    ),
+                  );
                 },
               ),
               _BottomNavItem(
                 icon: Icons.notifications,
-                label: 'Updates',
+                label: 'Actualizaciones',
                 isActive: _currentIndex == 2,
                 onTap: () {
                   setState(() {
