@@ -8,14 +8,31 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // Controllers para Login
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  
+  // Controllers para Registro
+  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _registerEmailController = TextEditingController();
+  final _registerPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  
   bool _isLoginTab = true;
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
+  bool _showLoginPassword = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _nameController.dispose();
+    _usernameController.dispose();
+    _registerEmailController.dispose();
+    _registerPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -30,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              // Logo
+              // Logo - Imagen de taza de café
               Container(
                 width: 120,
                 height: 120,
@@ -40,11 +57,15 @@ class _LoginPageState extends State<LoginPage> {
                     color: const Color(0xFF4A2C1A), // Marrón oscuro
                     width: 3,
                   ),
+                  color: Colors.white,
                 ),
-                child: const Icon(
-                  Icons.coffee,
-                  size: 70,
-                  color: Color(0xFF4A2C1A),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/coffe-logo-removebg-preview.png',
+                    width: 114,
+                    height: 114,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -64,19 +85,20 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 14,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF4A2C1A), // Marrón oscuro
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20), // Más ovalado
                     ),
                     child: const Text(
                       'for Owners',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
@@ -121,44 +143,122 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
               const SizedBox(height: 32),
-              // Campos de entrada
-              _CustomTextField(
-                controller: _emailController,
-                label: 'Correo electrónico',
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              _CustomTextField(
-                controller: _passwordController,
-                label: 'Contraseña',
-                obscureText: true,
-              ),
-              const SizedBox(height: 32),
-              // Botón de acción
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implementar lógica de login
+              // Formularios según el tab activo
+              if (_isLoginTab) ...[
+                // Formulario de Login
+                _CustomTextField(
+                  controller: _emailController,
+                  label: 'Correo electrónico',
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                _CustomTextField(
+                  controller: _passwordController,
+                  label: 'Contraseña',
+                  obscureText: !_showLoginPassword,
+                  showPasswordToggle: true,
+                  onTogglePassword: () {
+                    setState(() {
+                      _showLoginPassword = !_showLoginPassword;
+                    });
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                ),
+                const SizedBox(height: 32),
+                // Botón de Login
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // TODO: Implementar lógica de login
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Iniciar Sesión',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    child: const Text(
+                      'Iniciar Sesión',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ] else ...[
+                // Formulario de Registro
+                _CustomTextField(
+                  controller: _nameController,
+                  label: 'Nombre',
+                  keyboardType: TextInputType.name,
+                ),
+                const SizedBox(height: 16),
+                _CustomTextField(
+                  controller: _usernameController,
+                  label: 'Usuario',
+                  keyboardType: TextInputType.text,
+                ),
+                const SizedBox(height: 16),
+                _CustomTextField(
+                  controller: _registerEmailController,
+                  label: 'Correo electrónico',
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                _CustomTextField(
+                  controller: _registerPasswordController,
+                  label: 'Contraseña',
+                  obscureText: !_showPassword,
+                  showPasswordToggle: true,
+                  onTogglePassword: () {
+                    setState(() {
+                      _showPassword = !_showPassword;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _CustomTextField(
+                  controller: _confirmPasswordController,
+                  label: 'Confirmar contraseña',
+                  obscureText: !_showConfirmPassword,
+                  showPasswordToggle: true,
+                  onTogglePassword: () {
+                    setState(() {
+                      _showConfirmPassword = !_showConfirmPassword;
+                    });
+                  },
+                ),
+                const SizedBox(height: 32),
+                // Botón de Registro
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // TODO: Implementar lógica de registro
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Registrarse',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 40),
             ],
           ),
@@ -212,12 +312,16 @@ class _CustomTextField extends StatelessWidget {
   final String label;
   final TextInputType? keyboardType;
   final bool obscureText;
+  final bool showPasswordToggle;
+  final VoidCallback? onTogglePassword;
 
   const _CustomTextField({
     required this.controller,
     required this.label,
     this.keyboardType,
     this.obscureText = false,
+    this.showPasswordToggle = false,
+    this.onTogglePassword,
   });
 
   @override
@@ -256,6 +360,17 @@ class _CustomTextField extends StatelessWidget {
           horizontal: 16,
           vertical: 16,
         ),
+        suffixIcon: showPasswordToggle
+            ? IconButton(
+                icon: Icon(
+                  obscureText
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: const Color(0xFF5A5A5A),
+                ),
+                onPressed: onTogglePassword,
+              )
+            : null,
       ),
     );
   }
