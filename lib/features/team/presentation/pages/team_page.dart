@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'edit_member_page.dart';
+import '../../../business/presentation/pages/my_businesses_page.dart';
 
 class TeamPage extends StatefulWidget {
   const TeamPage({super.key});
@@ -72,7 +74,16 @@ class _TeamPageState extends State<TeamPage> {
               // TODO: Implementar lógica de eliminación
             },
             onEdit: () {
-              // TODO: Implementar lógica de edición
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => EditMemberPage(
+                    name: member['name']!,
+                    email: member['email']!,
+                    role: member['role']!,
+                    status: member['status']!,
+                  ),
+                ),
+              );
             },
             onChat: () {
               // TODO: Implementar lógica de chat
@@ -103,10 +114,10 @@ class _TeamPageState extends State<TeamPage> {
         ),
         padding: const EdgeInsets.only(bottom: 6),
         child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
+          height: 70,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _BottomNavItem(
                 icon: Icons.home,
@@ -130,6 +141,18 @@ class _TeamPageState extends State<TeamPage> {
                 isActive: _currentIndex == 2,
                 onTap: () {
                   // TODO: Navegar a Updates
+                },
+              ),
+              _BottomNavItem(
+                icon: Icons.business,
+                label: 'Negocio',
+                isActive: _currentIndex == 3,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MyBusinessesPage(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -362,34 +385,40 @@ class _BottomNavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: isActive
               ? const Color(0xFFF5F1E8) // Beige claro
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 20,
+              size: 24,
               color: isActive
                   ? const Color(0xFF4A2C1A) // Marrón oscuro
                   : const Color(0xFF5A5A5A), // Gris oscuro
             ),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: isActive
-                    ? const Color(0xFF4A2C1A) // Marrón oscuro
-                    : const Color(0xFF5A5A5A), // Gris oscuro
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: label.length > 12 ? 9 : 11,
+                  color: isActive
+                      ? const Color(0xFF4A2C1A) // Marrón oscuro
+                      : const Color(0xFF5A5A5A), // Gris oscuro
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                ),
               ),
             ),
           ],
