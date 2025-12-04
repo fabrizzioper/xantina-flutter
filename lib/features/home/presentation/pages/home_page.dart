@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../../core/utils/image_helpers.dart';
 import '../../../team/presentation/pages/team_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
@@ -7,23 +9,27 @@ import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../tasks/presentation/pages/create_task_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../profile/presentation/pages/edit_profile_page.dart';
+import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.authResponse?.user;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F1E8), // Beige claro
+      backgroundColor: const Color(0xFFF5F1E8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+        backgroundColor: const Color(0xFF4A2C1A),
         elevation: 0,
         automaticallyImplyLeading: false,
         title: GestureDetector(
@@ -36,33 +42,18 @@ class _HomePageState extends State<HomePage> {
           },
           child: Row(
             children: [
-              Container(
+              SizedBox(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 1.5,
-                  ),
-                  color: Colors.white,
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/images/coffe-logo-removebg-preview.png',
-                    width: 34,
-                    height: 34,
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                child: ImageHelpers.buildBase64Image(user?.image, size: 36),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    const Text(
                       'Hello,',
                       style: TextStyle(
                         fontSize: 12,
@@ -70,8 +61,8 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     Text(
-                      'Nombre Usuario',
-                      style: TextStyle(
+                      user?.name ?? 'Usuario',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,

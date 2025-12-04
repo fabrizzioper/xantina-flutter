@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/image_helpers.dart';
+import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 
-class EditProfilePage extends StatefulWidget {
+class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
 
   @override
-  State<EditProfilePage> createState() => _EditProfilePageState();
+  ConsumerState<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditProfilePage> {
+class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -16,11 +19,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Datos del usuario actual (ejemplo)
-    _nameController = TextEditingController(text: 'Nombre Usuario');
-    _emailController = TextEditingController(text: 'usuario@example.com');
+    final authState = ref.read(authStateProvider);
+    final user = authState.authResponse?.user;
+    
+    _nameController = TextEditingController(text: user?.name ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController();
-    _roleController = TextEditingController(text: 'Gerente');
+    _roleController = TextEditingController(text: user?.role ?? 'user');
   }
 
   @override
@@ -34,6 +39,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.authResponse?.user;
+
+    // Actualizar controllers si el usuario cambia
+    if (user != null) {
+      _nameController.text = user.name;
+      _emailController.text = user.email;
+      _roleController.text = user.role;
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1E8), // Beige claro
       appBar: AppBar(
@@ -65,45 +80,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
           children: [
             const SizedBox(height: 24),
             // Foto de perfil
-            GestureDetector(
-              onTap: () {
-                // TODO: Implementar selección de foto
-              },
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4A2C1A), // Marrón oscuro
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 3,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 50,
-                ),
-              ),
-            ),
+            ImageHelpers.buildBase64Image(user?.image, size: 100),
             const SizedBox(height: 16),
             // Nombre
             Text(
-              _nameController.text,
+              user?.name ?? 'Usuario',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A3A5F), // Azul oscuro
+                color: Color(0xFF1A3A5F),
               ),
             ),
             const SizedBox(height: 8),
             // Username (email sin dominio)
             Text(
-              '@${_emailController.text.split('@')[0]}',
+              user?.email != null ? '@${user!.email.split('@')[0]}' : '@usuario',
               style: const TextStyle(
                 fontSize: 16,
-                color: Color(0xFF5A5A5A), // Gris oscuro
+                color: Color(0xFF5A5A5A),
               ),
             ),
             const SizedBox(height: 24),
@@ -138,7 +132,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Rol: ${_roleController.text}',
+                  'Rol: ${user?.role ?? 'user'}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF5A5A5A),
@@ -168,32 +162,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
               hintText: '987654321',
             ),
             const SizedBox(height: 32),
-            // Botón de editar rol y permisos
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Implementar lógica de edición de rol y permisos
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5A5A5A), // Gris
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            // Botón de editar rol y permisos (solo para admin)
+            if (user?.role == 'admin') ...[
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // TODO: Implementar lógica de edición de rol y permisos
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5A5A5A),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
                   ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Editar Rol y Permisos',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  child: const Text(
+                    'Editar Rol y Permisos',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
+            ],
             SizedBox(
               width: double.infinity,
               height: 56,

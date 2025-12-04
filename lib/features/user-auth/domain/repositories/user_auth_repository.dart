@@ -1,0 +1,21 @@
+import '../entities/app_user.dart';
+
+abstract class UserAuthRepository {
+  Future<AuthResponse> login(String email, String password);
+  Future<AuthResponse> register({
+    required String name,
+    required String email,
+    required String password,
+    String? image,
+  });
+}
+
+class AuthResponse {
+  final String accessToken;
+  final AppUser user;
+
+  const AuthResponse({
+    required this.accessToken,
+    required this.user,
+  });
+}
