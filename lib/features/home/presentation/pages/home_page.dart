@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../team/presentation/pages/team_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
+import '../../../alerts/presentation/pages/alerts_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -334,7 +335,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: 20),
         child: Container(
           height: 70,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -356,9 +357,11 @@ class _HomePageState extends State<HomePage> {
                 label: 'Actualizaciones',
                 isActive: _currentIndex == 1,
                 onTap: () {
-                  setState(() {
-                    _currentIndex = 1;
-                  });
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AlertsPage(),
+                    ),
+                  );
                 },
               ),
               _BottomNavItem(

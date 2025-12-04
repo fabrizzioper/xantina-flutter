@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'create_business_page.dart';
 import 'business_details_page.dart';
+import '../../../alerts/presentation/pages/alerts_page.dart';
 
 class MyBusinessesPage extends StatefulWidget {
   const MyBusinessesPage({super.key});
@@ -103,7 +104,7 @@ class _MyBusinessesPageState extends State<MyBusinessesPage> {
             ),
           ],
         ),
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: 20),
         child: Container(
           height: 70,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -123,7 +124,11 @@ class _MyBusinessesPageState extends State<MyBusinessesPage> {
                 label: 'Actualizaciones',
                 isActive: _currentIndex == 1,
                 onTap: () {
-                  // TODO: Navegar a Updates
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AlertsPage(),
+                    ),
+                  );
                 },
               ),
               _BottomNavItem(

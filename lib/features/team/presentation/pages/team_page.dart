@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'edit_member_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
+import '../../../alerts/presentation/pages/alerts_page.dart';
 
 class TeamPage extends StatefulWidget {
   const TeamPage({super.key});
@@ -112,7 +113,7 @@ class _TeamPageState extends State<TeamPage> {
             ),
           ],
         ),
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: 20),
         child: Container(
           height: 70,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -132,7 +133,11 @@ class _TeamPageState extends State<TeamPage> {
                 label: 'Actualizaciones',
                 isActive: _currentIndex == 1,
                 onTap: () {
-                  // TODO: Navegar a Updates
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AlertsPage(),
+                    ),
+                  );
                 },
               ),
               _BottomNavItem(
