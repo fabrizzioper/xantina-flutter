@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'edit_member_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
+import '../../../reports/presentation/pages/reports_page.dart';
 
 class TeamPage extends StatefulWidget {
   const TeamPage({super.key});
@@ -60,6 +61,22 @@ class _TeamPageState extends State<TeamPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.bar_chart,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ReportsPage(),
+                ),
+              );
+            },
+            tooltip: 'Reportes',
+          ),
+        ],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(24.0),

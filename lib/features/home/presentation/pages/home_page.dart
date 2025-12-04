@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../team/presentation/pages/team_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
+import '../../../reports/presentation/pages/reports_page.dart';
+import '../../../tasks/presentation/pages/create_task_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,6 +22,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
         elevation: 0,
+        automaticallyImplyLeading: false,
         title: Row(
           children: [
             Container(
@@ -105,47 +108,64 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4A2C1A), // Marrón oscuro
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CreateTaskPage(),
                   ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Text(
-                      'Toca el más para crear una nueva tarea',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF5A5A5A), // Gris oscuro
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4A2C1A), // Marrón oscuro
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 28,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Text(
+                        'Toca el más para crear una nueva tarea',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF5A5A5A), // Gris oscuro
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
             // Card de Report - Ancho completo
-            _InfoCard(
-              title: 'Reporte',
-              child: Column(
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ReportsPage(),
+                  ),
+                );
+              },
+              child: _InfoCard(
+                title: 'Reporte',
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 20),
@@ -197,8 +217,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 20                  ),
                 ],
+              ),
               ),
             ),
             const SizedBox(height: 16),

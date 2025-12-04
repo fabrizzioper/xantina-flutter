@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
+import '../../../reports/presentation/pages/reports_page.dart';
 
 class AlertsPage extends StatefulWidget {
   const AlertsPage({super.key});
@@ -71,7 +72,7 @@ class _AlertsPageState extends State<AlertsPage> {
     final filteredYesterdayAlerts = _getFilteredAlerts(_yesterdayAlerts);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+      backgroundColor: const Color(0xFFF5F1E8), // Beige claro
       appBar: AppBar(
         backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
         elevation: 0,
@@ -93,6 +94,22 @@ class _AlertsPageState extends State<AlertsPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.bar_chart,
+              color: Color(0xFF4A2C1A), // Marrón oscuro
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ReportsPage(),
+                ),
+              );
+            },
+            tooltip: 'Reportes',
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -147,7 +164,7 @@ class _AlertsPageState extends State<AlertsPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Color(0xFF1A3A5F), // Azul oscuro (igual que otras pantallas)
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -167,7 +184,7 @@ class _AlertsPageState extends State<AlertsPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Color(0xFF1A3A5F), // Azul oscuro (igual que otras pantallas)
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -262,9 +279,13 @@ class _FilterButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.white // Blanco cuando está seleccionado
-              : Colors.transparent,
+              ? const Color(0xFF4A2C1A) // Marrón oscuro cuando está seleccionado
+              : Colors.white, // Blanco cuando no está seleccionado
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFF4A2C1A), // Marrón oscuro
+            width: 1,
+          ),
         ),
         child: Text(
           label,
@@ -272,8 +293,8 @@ class _FilterButton extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: isSelected
-                ? const Color(0xFF4A2C1A) // Marrón oscuro cuando está seleccionado
-                : Colors.white, // Blanco cuando no está seleccionado
+                ? Colors.white // Blanco cuando está seleccionado
+                : const Color(0xFF4A2C1A), // Marrón oscuro cuando no está seleccionado
           ),
         ),
       ),
