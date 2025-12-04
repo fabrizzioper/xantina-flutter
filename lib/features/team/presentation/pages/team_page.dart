@@ -10,7 +10,7 @@ class TeamPage extends StatefulWidget {
 }
 
 class _TeamPageState extends State<TeamPage> {
-  int _currentIndex = 1; // Team está activo
+  int _currentIndex = 0; // Team ya no está en el bottom nav
 
   // Datos de ejemplo
   final List<Map<String, String>> _teamMembers = [
@@ -128,17 +128,9 @@ class _TeamPageState extends State<TeamPage> {
                 },
               ),
               _BottomNavItem(
-                icon: Icons.people,
-                label: 'Equipo',
-                isActive: _currentIndex == 1,
-                onTap: () {
-                  // Ya estamos en Team
-                },
-              ),
-              _BottomNavItem(
                 icon: Icons.notifications,
                 label: 'Actualizaciones',
-                isActive: _currentIndex == 2,
+                isActive: _currentIndex == 1,
                 onTap: () {
                   // TODO: Navegar a Updates
                 },
@@ -146,7 +138,7 @@ class _TeamPageState extends State<TeamPage> {
               _BottomNavItem(
                 icon: Icons.business,
                 label: 'Negocio',
-                isActive: _currentIndex == 3,
+                isActive: _currentIndex == 2,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(

@@ -352,31 +352,19 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               _BottomNavItem(
-                icon: Icons.people,
-                label: 'Equipo',
-                isActive: _currentIndex == 1,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const TeamPage(),
-                    ),
-                  );
-                },
-              ),
-              _BottomNavItem(
                 icon: Icons.notifications,
                 label: 'Actualizaciones',
-                isActive: _currentIndex == 2,
+                isActive: _currentIndex == 1,
                 onTap: () {
                   setState(() {
-                    _currentIndex = 2;
+                    _currentIndex = 1;
                   });
                 },
               ),
               _BottomNavItem(
                 icon: Icons.business,
                 label: 'Negocio',
-                isActive: _currentIndex == 3,
+                isActive: _currentIndex == 2,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(

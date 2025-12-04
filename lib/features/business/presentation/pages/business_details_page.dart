@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'invite_member_page.dart';
+import '../../../team/presentation/pages/team_page.dart';
+import '../../../chat/presentation/pages/team_chat_page.dart';
 
 class BusinessDetailsPage extends StatelessWidget {
   final String businessName;
@@ -52,7 +54,31 @@ class BusinessDetailsPage extends StatelessWidget {
               );
             },
           ),
-          // Aquí se pueden agregar más opciones en el futuro
+          const SizedBox(height: 16),
+          _OptionCard(
+            icon: Icons.people,
+            title: 'Ver miembros',
+            onTap: () {
+              // Navegar a TeamPage (ya tiene el bottom navigation bar activo)
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const TeamPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          _OptionCard(
+            icon: Icons.chat,
+            title: 'Chat',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const TeamChatPage(),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

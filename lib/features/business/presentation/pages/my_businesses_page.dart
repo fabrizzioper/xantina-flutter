@@ -10,7 +10,7 @@ class MyBusinessesPage extends StatefulWidget {
 }
 
 class _MyBusinessesPageState extends State<MyBusinessesPage> {
-  int _currentIndex = 3; // Negocio está activo
+  int _currentIndex = 2; // Negocio está activo
 
   // Lista de negocios de ejemplo
   final List<Map<String, String>> _businesses = [
@@ -119,17 +119,9 @@ class _MyBusinessesPageState extends State<MyBusinessesPage> {
                 },
               ),
               _BottomNavItem(
-                icon: Icons.people,
-                label: 'Equipo',
-                isActive: _currentIndex == 1,
-                onTap: () {
-                  // TODO: Navegar a Team
-                },
-              ),
-              _BottomNavItem(
                 icon: Icons.notifications,
                 label: 'Actualizaciones',
-                isActive: _currentIndex == 2,
+                isActive: _currentIndex == 1,
                 onTap: () {
                   // TODO: Navegar a Updates
                 },
@@ -137,7 +129,7 @@ class _MyBusinessesPageState extends State<MyBusinessesPage> {
               _BottomNavItem(
                 icon: Icons.business,
                 label: 'Negocio',
-                isActive: _currentIndex == 3,
+                isActive: _currentIndex == 2,
                 onTap: () {
                   // Ya estamos en Negocio
                 },
