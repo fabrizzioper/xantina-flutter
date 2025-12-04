@@ -4,6 +4,8 @@ import '../../../business/presentation/pages/my_businesses_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
 import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../tasks/presentation/pages/create_task_page.dart';
+import '../../../settings/presentation/pages/settings_page.dart';
+import '../../../profile/presentation/pages/edit_profile_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,53 +25,62 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
+        title: GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const EditProfilePage(),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 1.5,
+                  ),
                   color: Colors.white,
-                  width: 1.5,
                 ),
-                color: Colors.white,
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/images/coffe-logo-removebg-preview.png',
-                  width: 34,
-                  height: 34,
-                  fit: BoxFit.contain,
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/coffe-logo-removebg-preview.png',
+                    width: 34,
+                    height: 34,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Hello,',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white70,
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Hello,',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Nombre Usuario',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                    Text(
+                      'Nombre Usuario',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           IconButton(
@@ -79,7 +90,11 @@ class _HomePageState extends State<HomePage> {
               size: 22,
             ),
             onPressed: () {
-              // TODO: Navegar a configuración
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(),
+                ),
+              );
             },
           ),
         ],
