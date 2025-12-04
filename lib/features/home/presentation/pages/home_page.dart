@@ -185,53 +185,37 @@ class _HomePageState extends State<HomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 20),
-                  // Gráfico de barras mejorado con fl_chart
-                  SizedBox(
-                    height: 120,
-                    child: BarChart(
-                      BarChartData(
-                        alignment: BarChartAlignment.spaceAround,
-                        maxY: 100,
-                        barTouchData: BarTouchData(enabled: false),
-                        titlesData: FlTitlesData(show: false),
-                        gridData: FlGridData(show: false),
-                        borderData: FlBorderData(show: false),
-                        barGroups: [
-                          BarChartGroupData(
-                            x: 0,
-                            barRods: [
-                              BarChartRodData(
-                                toY: 40,
-                                color: Colors.red,
-                                width: 28,
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(8),
-                                ),
+                  // Gráfico circular de porcentaje
+                  Center(
+                    child: SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Círculo de progreso
+                          SizedBox(
+                            width: 120,
+                            height: 120,
+                            child: CircularProgressIndicator(
+                              value: 0.75, // 75%
+                              strokeWidth: 12,
+                              backgroundColor: const Color(0xFFE0E0E0),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Color(0xFF4A2C1A),
                               ),
-                            ],
+                            ),
                           ),
-                          BarChartGroupData(
-                            x: 1,
-                            barRods: [
-                              BarChartRodData(
-                                toY: 60,
-                                color: Colors.green,
-                                width: 28,
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(8),
-                                ),
-                              ),
-                            ],
-                          ),
-                          BarChartGroupData(
-                            x: 2,
-                            barRods: [
-                              BarChartRodData(
-                                toY: 30,
-                                color: Colors.blue,
-                                width: 28,
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(8),
+                          // Texto en el centro
+                          const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '75%',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF4A2C1A),
                                 ),
                               ),
                             ],
@@ -239,39 +223,6 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Leyenda centrada
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
                   ),
                   const SizedBox(height: 20                  ),
                 ],
