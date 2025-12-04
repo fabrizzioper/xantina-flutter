@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import '../../../home/presentation/pages/home_page.dart';
+import '../../../business/presentation/pages/my_businesses_page.dart';
+import '../../../alerts/presentation/pages/alerts_page.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -10,13 +12,14 @@ class ReportsPage extends StatefulWidget {
 
 class _ReportsPageState extends State<ReportsPage> {
   String _selectedPeriod = '24 hrs usage';
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF5A5A5A), // Gris oscuro
+      backgroundColor: const Color(0xFFF5F1E8), // Beige claro
       appBar: AppBar(
-        backgroundColor: const Color(0xFF5A5A5A), // Gris oscuro
+        backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
@@ -42,11 +45,11 @@ class _ReportsPageState extends State<ReportsPage> {
           children: [
             // Card principal blanco
             Container(
-              margin: const EdgeInsets.all(24),
-              padding: const EdgeInsets.all(24),
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,102 +118,133 @@ class _ReportsPageState extends State<ReportsPage> {
                     ],
                   ),
                   const SizedBox(height: 32),
-                  // Circular Gauge Chart
+                  // Circular Progress Chart
                   Center(
-                    child: SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Gauge semicircular
-                          CustomPaint(
-                            size: const Size(200, 200),
-                            painter: _GaugePainter(),
-                          ),
-                          // Texto en el centro
-                          const Column(
-                            mainAxisSize: MainAxisSize.min,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 180,
+                          height: 180,
+                          child: Stack(
+                            alignment: Alignment.center,
                             children: [
-                              Text(
-                                '80%',
-                                style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                              // Círculo de fondo
+                              SizedBox(
+                                width: 180,
+                                height: 180,
+                                child: CircularProgressIndicator(
+                                  value: 0.8,
+                                  strokeWidth: 20,
+                                  backgroundColor: const Color(0xFFE0E0E0),
+                                  valueColor: const AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF4A2C1A),
+                                  ),
                                 ),
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Recetas aprobadas usadas',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF5A5A5A),
-                                ),
-                                textAlign: TextAlign.center,
+                              // Texto en el centro
+                              const Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '80%',
+                                    style: TextStyle(
+                                      fontSize: 42,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Recetas aprobadas\nusadas',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF5A5A5A),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Usage by Origin and Time of Day - Side by side
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Uso por origen',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _OriginItem(
+                              color: const Color(0xFF4A2C1A),
+                              origin: 'Guatemala',
+                              quantity: '123g',
+                            ),
+                            const SizedBox(height: 8),
+                            _OriginItem(
+                              color: const Color(0xFF6B4423),
+                              origin: 'Etiopía',
+                              quantity: '105g',
+                            ),
+                            const SizedBox(height: 8),
+                            _OriginItem(
+                              color: const Color(0xFF8B5A3C),
+                              origin: 'Colombia',
+                              quantity: '104g',
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  // Usage by Origin
-                  const Text(
-                    'Uso por origen',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _OriginItem(
-                    color: const Color(0xFF4A2C1A),
-                    origin: 'Guatemala',
-                    quantity: '123g',
-                  ),
-                  const SizedBox(height: 8),
-                  _OriginItem(
-                    color: const Color(0xFF6B4423),
-                    origin: 'Etiopía',
-                    quantity: '105g',
-                  ),
-                  const SizedBox(height: 8),
-                  _OriginItem(
-                    color: const Color(0xFF8B5A3C),
-                    origin: 'Colombia',
-                    quantity: '104g',
-                  ),
-                  const SizedBox(height: 32),
-                  // Time of Day Usage
-                  const Text(
-                    'Uso por hora del día',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _OriginItem(
-                    color: Colors.black,
-                    origin: 'Mañana',
-                    quantity: '400g',
-                  ),
-                  const SizedBox(height: 8),
-                  _OriginItem(
-                    color: const Color(0xFF9E9E9E),
-                    origin: 'Tarde',
-                    quantity: '200g',
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Uso por hora del día',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _OriginItem(
+                              color: Colors.black,
+                              origin: 'Mañana',
+                              quantity: '400g',
+                            ),
+                            const SizedBox(height: 8),
+                            _OriginItem(
+                              color: const Color(0xFF9E9E9E),
+                              origin: 'Tarde',
+                              quantity: '200g',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             // Selector de período
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -236,108 +270,72 @@ class _ReportsPageState extends State<ReportsPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
           ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F1E8), // Beige claro
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Container(
+          height: 70,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _BottomNavItem(
+                icon: Icons.home,
+                label: 'Inicio',
+                isActive: _currentIndex == 0,
+                onTap: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => const HomePage(),
+                    ),
+                  );
+                },
+              ),
+              _BottomNavItem(
+                icon: Icons.notifications,
+                label: 'Actualizaciones',
+                isActive: _currentIndex == 1,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AlertsPage(),
+                    ),
+                  );
+                },
+              ),
+              _BottomNavItem(
+                icon: Icons.business,
+                label: 'Negocio',
+                isActive: _currentIndex == 2,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MyBusinessesPage(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _GaugePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 20
-      ..strokeCap = StrokeCap.round;
-
-    final center = Offset(size.width / 2, size.height);
-    final radius = size.width / 2;
-
-    // Arco marrón oscuro (0-120)
-    paint.color = const Color(0xFF4A2C1A);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      math.pi,
-      math.pi * 0.3,
-      false,
-      paint,
-    );
-
-    // Arco negro (120-180)
-    paint.color = Colors.black;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      math.pi * 1.3,
-      math.pi * 0.2,
-      false,
-      paint,
-    );
-
-    // Arco gris claro (180-240)
-    paint.color = const Color(0xFF9E9E9E);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      math.pi * 1.5,
-      math.pi * 0.2,
-      false,
-      paint,
-    );
-
-    // Arco marrón oscuro (240-300)
-    paint.color = const Color(0xFF4A2C1A);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      math.pi * 1.7,
-      math.pi * 0.2,
-      false,
-      paint,
-    );
-
-    // Marcas de escala
-    final scalePaint = Paint()
-      ..color = const Color(0xFFE0E0E0)
-      ..strokeWidth = 2;
-
-    for (int i = 0; i <= 4; i++) {
-      final angle = math.pi + (math.pi * i / 4);
-      final startX = center.dx + (radius - 10) * math.cos(angle);
-      final startY = center.dy + (radius - 10) * math.sin(angle);
-      final endX = center.dx + (radius + 10) * math.cos(angle);
-      final endY = center.dy + (radius + 10) * math.sin(angle);
-
-      canvas.drawLine(
-        Offset(startX, startY),
-        Offset(endX, endY),
-        scalePaint,
-      );
-
-      // Números de escala
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: (i * 100).toString(),
-          style: const TextStyle(
-            fontSize: 10,
-            color: Color(0xFF5A5A5A),
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(
-          center.dx + (radius - 30) * math.cos(angle) - textPainter.width / 2,
-          center.dy + (radius - 30) * math.sin(angle) - textPainter.height / 2,
-        ),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 class _OriginItem extends StatelessWidget {
   final Color color;
@@ -412,6 +410,66 @@ class _PeriodButton extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: isSelected ? Colors.white : Colors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomNavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _BottomNavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFFF5F1E8) // Beige claro
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: isActive
+                  ? const Color(0xFF4A2C1A) // Marrón oscuro
+                  : const Color(0xFF5A5A5A), // Gris oscuro
+            ),
+            const SizedBox(height: 2),
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: label.length > 12 ? 9 : 11,
+                  color: isActive
+                      ? const Color(0xFF4A2C1A) // Marrón oscuro
+                      : const Color(0xFF5A5A5A), // Gris oscuro
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                ),
               ),
             ),
           ],
