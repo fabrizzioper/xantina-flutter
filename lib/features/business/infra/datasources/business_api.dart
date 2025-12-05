@@ -70,8 +70,8 @@ class BusinessApi implements BusinessRepository {
     required String type,
     required String phone,
     required String address,
-    String? description,
-    String? logo,
+    required String description,
+    required String logo,
   }) async {
     try {
       final requestData = <String, dynamic>{
@@ -79,15 +79,9 @@ class BusinessApi implements BusinessRepository {
         'type': type,
         'phone': phone,
         'address': address,
+        'description': description,
+        'logo': logo,
       };
-      
-      if (description != null && description.isNotEmpty) {
-        requestData['description'] = description;
-      }
-      
-      if (logo != null && logo.isNotEmpty) {
-        requestData['logo'] = logo;
-      }
 
       final response = await _dio.post(
         '/business',

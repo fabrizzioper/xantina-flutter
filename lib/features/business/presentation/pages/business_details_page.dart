@@ -1,31 +1,28 @@
 import 'package:flutter/material.dart';
-import 'invite_member_page.dart';
-import '../../../team/presentation/pages/team_page.dart';
+import 'add_members_page.dart';
+import 'business_members_page.dart';
 import '../../../chat/presentation/pages/team_chat_page.dart';
 
 class BusinessDetailsPage extends StatelessWidget {
+  final String businessId;
   final String businessName;
 
   const BusinessDetailsPage({
     super.key,
+    required this.businessId,
     required this.businessName,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F1E8), // Beige claro
+      backgroundColor: const Color(0xFFF5F1E8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+        backgroundColor: const Color(0xFF4A2C1A),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           businessName,
@@ -43,11 +40,12 @@ class BusinessDetailsPage extends StatelessWidget {
           const SizedBox(height: 24),
           _OptionCard(
             icon: Icons.person_add,
-            title: 'Invitar a un nuevo miembro',
+            title: 'Agregar miembros',
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => InviteMemberPage(
+                  builder: (context) => AddMembersPage(
+                    businessId: businessId,
                     businessName: businessName,
                   ),
                 ),
@@ -59,10 +57,12 @@ class BusinessDetailsPage extends StatelessWidget {
             icon: Icons.people,
             title: 'Ver miembros',
             onTap: () {
-              // Navegar a TeamPage (ya tiene el bottom navigation bar activo)
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const TeamPage(),
+                  builder: (context) => BusinessMembersPage(
+                    businessId: businessId,
+                    businessName: businessName,
+                  ),
                 ),
               );
             },
@@ -116,7 +116,7 @@ class _OptionCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF4A2C1A), // Marrón oscuro
+                color: const Color(0xFF4A2C1A),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -132,7 +132,7 @@ class _OptionCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A3A5F), // Azul oscuro
+                  color: Color(0xFF1A3A5F),
                 ),
               ),
             ),
@@ -147,4 +147,3 @@ class _OptionCard extends StatelessWidget {
     );
   }
 }
-

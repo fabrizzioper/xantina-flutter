@@ -59,8 +59,8 @@ class BusinessNotifier extends StateNotifier<BusinessState> {
     required String type,
     required String phone,
     required String address,
-    String? description,
-    String? logo,
+    required String description,
+    required String logo,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     

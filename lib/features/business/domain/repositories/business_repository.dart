@@ -8,7 +8,7 @@ abstract class BusinessRepository {
     required String type,
     required String phone,
     required String address,
-    String? description,
-    String? logo,
+    required String description,
+    required String logo,
   });
 }

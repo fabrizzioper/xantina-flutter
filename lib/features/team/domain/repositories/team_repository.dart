@@ -6,6 +6,6 @@ abstract class TeamRepository {
     required String name,
     required String email,
     required String password,
-    String? image,
+    required String image,
   });
 }

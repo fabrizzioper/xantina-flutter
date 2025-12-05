@@ -13,6 +13,10 @@ abstract class UserAuthRepository {
     String? email,
     String? image,
   });
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }
 
 class AuthResponse {

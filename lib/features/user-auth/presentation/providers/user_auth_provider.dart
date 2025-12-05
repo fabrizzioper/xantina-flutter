@@ -106,6 +106,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _userAuthRepository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> logout() async {
     await LocalStorage.clear();
     state = const AuthState.initial();

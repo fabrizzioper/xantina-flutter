@@ -149,4 +149,39 @@ class UserAuthApi implements UserAuthRepository {
       throw Exception('Error inesperado: ${e.toString()}');
     }
   }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _dio.patch(
+        '/user-auth/profile/password',
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        },
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final responseData = e.response?.data;
+        String errorMessage = 'Error al cambiar contraseña';
+        
+        if (responseData is Map<String, dynamic>) {
+          final message = responseData['message'];
+          if (message is List && message.isNotEmpty) {
+            errorMessage = message.map((m) => m.toString()).join('\n');
+          } else if (message is String) {
+            errorMessage = message;
+          }
+        }
+        
+        throw Exception(errorMessage);
+      }
+      throw Exception('Error de conexión. Verifica tu internet');
+    } catch (e) {
+      throw Exception('Error inesperado: ${e.toString()}');
+    }
+  }
 }

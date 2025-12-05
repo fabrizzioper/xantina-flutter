@@ -57,7 +57,7 @@ class TeamNotifier extends StateNotifier<TeamState> {
     required String name,
     required String email,
     required String password,
-    String? image,
+    required String image,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     

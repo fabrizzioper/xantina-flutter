@@ -36,18 +36,13 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F1E8), // Beige claro
+      backgroundColor: const Color(0xFFF5F1E8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+        backgroundColor: const Color(0xFF4A2C1A),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Crear Negocio',
@@ -75,7 +70,9 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF4A2C1A), // Marrón oscuro
+                      color: _selectedImage == null
+                          ? Colors.red.shade300
+                          : const Color(0xFF4A2C1A),
                       width: 2,
                     ),
                     color: Colors.white,
@@ -105,35 +102,69 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
                                 color: Color(0xFF5A5A5A),
                               ),
                             ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '* Obligatorio',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.red.shade600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
                         ),
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              'Toca para seleccionar un logo',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (_selectedImage == null) ...[
+              const SizedBox(height: 4),
+              Text(
+                '* El logo es obligatorio',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.red.shade600,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: 32),
             // Campos del negocio
             _CustomTextField(
               controller: _businessNameController,
               label: 'Nombre del Negocio',
               keyboardType: TextInputType.text,
+              isRequired: true,
             ),
             const SizedBox(height: 16),
             _CustomTextField(
               controller: _typeController,
               label: 'Tipo',
               keyboardType: TextInputType.text,
+              isRequired: true,
             ),
             const SizedBox(height: 16),
             _CustomTextField(
               controller: _phoneController,
               label: 'Teléfono',
               keyboardType: TextInputType.phone,
+              isRequired: true,
             ),
             const SizedBox(height: 16),
             _CustomTextField(
               controller: _addressController,
               label: 'Dirección',
               keyboardType: TextInputType.streetAddress,
+              isRequired: true,
             ),
             const SizedBox(height: 16),
             _CustomTextField(
@@ -141,6 +172,7 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
               label: 'Descripción',
               keyboardType: TextInputType.multiline,
               maxLines: 4,
+              isRequired: true,
             ),
             const SizedBox(height: 32),
             // Botón de crear
@@ -150,7 +182,7 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
               child: ElevatedButton(
                 onPressed: _handleCreateBusiness,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+                  backgroundColor: const Color(0xFF4A2C1A),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -183,19 +215,29 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
   }
 
   Future<void> _handleCreateBusiness() async {
-    // Validar campos requeridos
+    // Validar que el logo sea obligatorio
+    if (_selectedImage == null || _logoBase64 == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor selecciona un logo para el negocio'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validar todos los campos requeridos
     if (_businessNameController.text.trim().isEmpty ||
         _typeController.text.trim().isEmpty ||
         _phoneController.text.trim().isEmpty ||
-        _addressController.text.trim().isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Por favor completa todos los campos requeridos'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+        _addressController.text.trim().isEmpty ||
+        _descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor completa todos los campos requeridos'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -205,14 +247,12 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
             type: _typeController.text.trim(),
             phone: _phoneController.text.trim(),
             address: _addressController.text.trim(),
-            description: _descriptionController.text.trim().isEmpty
-                ? null
-                : _descriptionController.text.trim(),
-            logo: _logoBase64,
+            description: _descriptionController.text.trim(),
+            logo: _logoBase64!,
           );
 
       if (mounted) {
-        Navigator.of(context).pop(true); // Retornar true para indicar éxito
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -237,7 +277,6 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
 
   Future<void> _selectLogo() async {
     try {
-      // Mostrar opciones: Cámara o Galería
       final ImageSource? source = await showModalBottomSheet<ImageSource>(
         context: context,
         builder: (context) => SafeArea(
@@ -262,13 +301,12 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
 
       final XFile? image = await _imagePicker.pickImage(
         source: source,
-        imageQuality: 50, // Calidad reducida para menor tamaño
-        maxWidth: 400, // Tamaño máximo más pequeño
-        maxHeight: 400, // Tamaño máximo más pequeño
+        imageQuality: 50,
+        maxWidth: 400,
+        maxHeight: 400,
       );
 
       if (image != null) {
-        // Verificar tamaño del archivo (máximo 2MB antes de base64)
         final file = File(image.path);
         final fileSize = await file.length();
         const maxSizeInBytes = 2 * 1024 * 1024; // 2MB
@@ -292,10 +330,8 @@ class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
           _selectedImage = image;
         });
 
-        // Convertir a base64
         final base64 = await Helpers.imageToBase64(image);
         if (base64 != null) {
-          // Verificar tamaño del base64 (máximo ~8MB que sería ~6MB después de base64)
           if (base64.length > 8 * 1024 * 1024) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -338,12 +374,14 @@ class _CustomTextField extends StatelessWidget {
   final String label;
   final TextInputType? keyboardType;
   final int? maxLines;
+  final bool isRequired;
 
   const _CustomTextField({
     required this.controller,
     required this.label,
     this.keyboardType,
     this.maxLines = 1,
+    this.isRequired = false,
   });
 
   @override
@@ -353,28 +391,28 @@ class _CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
       maxLines: maxLines,
       decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(
-          color: Color(0xFF5A5A5A), // Gris oscuro
+        labelText: isRequired ? '$label *' : label,
+        labelStyle: TextStyle(
+          color: isRequired ? Colors.red.shade700 : const Color(0xFF5A5A5A),
         ),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE0E0E0), // Gris claro
+          borderSide: BorderSide(
+            color: isRequired ? Colors.red.shade300 : const Color(0xFFE0E0E0),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE0E0E0), // Gris claro
+          borderSide: BorderSide(
+            color: isRequired ? Colors.red.shade300 : const Color(0xFFE0E0E0),
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF4A2C1A), // Marrón oscuro cuando está enfocado
+          borderSide: BorderSide(
+            color: isRequired ? Colors.red.shade700 : const Color(0xFF4A2C1A),
             width: 2,
           ),
         ),
@@ -386,4 +424,3 @@ class _CustomTextField extends StatelessWidget {
     );
   }
 }
-

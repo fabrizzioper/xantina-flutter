@@ -2,15 +2,15 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/dio_client.dart';
 import 'package:xantina/features/user-auth/domain/entities/app_user.dart';
 import 'package:xantina/features/user-auth/infra/models/user_model.dart';
-import '../../domain/repositories/team_repository.dart';
+import '../../domain/repositories/business_member_repository.dart';
 
-class TeamApi implements TeamRepository {
+class BusinessMemberApi implements BusinessMemberRepository {
   final Dio _dio = DioClient.getInstance();
 
   @override
-  Future<List<AppUser>> getTeamUsers() async {
+  Future<List<AppUser>> getBusinessMembers(String businessId) async {
     try {
-      final response = await _dio.get('/team/users');
+      final response = await _dio.get('/business/$businessId/members');
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((json) => UserModel.fromJson(json as Map<String, dynamic>))
@@ -18,7 +18,7 @@ class TeamApi implements TeamRepository {
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data;
-        String errorMessage = 'Error al obtener usuarios del equipo';
+        String errorMessage = 'Error al obtener miembros del negocio';
         
         if (responseData is Map<String, dynamic>) {
           final message = responseData['message'];
@@ -38,31 +38,26 @@ class TeamApi implements TeamRepository {
   }
 
   @override
-  Future<AppUser> createTeamUser({
-    required String name,
-    required String email,
-    required String password,
-    required String image,
+  Future<List<AppUser>> addMembers({
+    required String businessId,
+    required List<String> userIds,
   }) async {
     try {
-      final requestData = <String, dynamic>{
-        'name': name,
-        'email': email,
-        'password': password,
-        'image': image,
-      };
-
       final response = await _dio.post(
-        '/team/users',
-        data: requestData,
+        '/business/$businessId/members',
+        data: {
+          'userIds': userIds,
+        },
       );
-
-      final data = response.data as Map<String, dynamic>;
-      return UserModel.fromJson(data);
+      
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => UserModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data;
-        String errorMessage = 'Error al crear el usuario';
+        String errorMessage = 'Error al agregar miembros';
         
         if (responseData is Map<String, dynamic>) {
           final message = responseData['message'];

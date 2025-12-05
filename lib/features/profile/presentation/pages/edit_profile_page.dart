@@ -281,6 +281,29 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       ),
               ),
             ),
+            const SizedBox(height: 16),
+            // Botón para cambiar contraseña
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: OutlinedButton(
+                onPressed: isLoading ? null : _showChangePasswordDialog,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF4A2C1A),
+                  side: const BorderSide(color: Color(0xFF4A2C1A), width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Cambiar Contraseña',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -485,6 +508,209 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         );
       }
     }
+  }
+
+  void _showChangePasswordDialog() {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    bool showCurrentPassword = false;
+    bool showNewPassword = false;
+    bool showConfirmPassword = false;
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Cambiar Contraseña'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Campo contraseña actual
+                TextField(
+                  controller: currentPasswordController,
+                  obscureText: !showCurrentPassword,
+                  enabled: !isLoading,
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña actual',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        showCurrentPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setDialogState(() {
+                          showCurrentPassword = !showCurrentPassword;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Campo nueva contraseña
+                TextField(
+                  controller: newPasswordController,
+                  obscureText: !showNewPassword,
+                  enabled: !isLoading,
+                  decoration: InputDecoration(
+                    labelText: 'Nueva contraseña',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        showNewPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setDialogState(() {
+                          showNewPassword = !showNewPassword;
+                        });
+                      },
+                    ),
+                    helperText:
+                        'Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Campo confirmar contraseña
+                TextField(
+                  controller: confirmPasswordController,
+                  obscureText: !showConfirmPassword,
+                  enabled: !isLoading,
+                  decoration: InputDecoration(
+                    labelText: 'Confirmar nueva contraseña',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        showConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setDialogState(() {
+                          showConfirmPassword = !showConfirmPassword;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                    },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      if (currentPasswordController.text.isEmpty ||
+                          newPasswordController.text.isEmpty ||
+                          confirmPasswordController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Por favor completa todos los campos'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (newPasswordController.text !=
+                          confirmPasswordController.text) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Las contraseñas no coinciden'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (newPasswordController.text.length < 8) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'La contraseña debe tener al menos 8 caracteres'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      setDialogState(() {
+                        isLoading = true;
+                      });
+
+                      try {
+                        await ref
+                            .read(authStateProvider.notifier)
+                            .changePassword(
+                              currentPassword:
+                                  currentPasswordController.text,
+                              newPassword: newPasswordController.text,
+                            );
+
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Contraseña actualizada correctamente'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() {
+                          isLoading = false;
+                        });
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Error al cambiar contraseña: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A2C1A),
+                foregroundColor: Colors.white,
+              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Cambiar'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

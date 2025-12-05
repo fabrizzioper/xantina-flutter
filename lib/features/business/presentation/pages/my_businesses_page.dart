@@ -118,6 +118,7 @@ class _MyBusinessesPageState extends ConsumerState<MyBusinessesPage> {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => BusinessDetailsPage(
+                                    businessId: business.id,
                                     businessName: business.name,
                                   ),
                                 ),
