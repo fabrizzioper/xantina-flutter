@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
-import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../../notifications/domain/repositories/notification_repository.dart'
     as notification_domain;
@@ -115,29 +114,7 @@ class _AlertsPageState extends ConsumerState<AlertsPage> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          if (notificationState.unreadCount > 0)
-            IconButton(
-              icon: const Icon(Icons.done_all, color: Colors.white),
-              onPressed: () async {
-                await ref
-                    .read(notificationStateProvider.notifier)
-                    .markAllAsRead();
-              },
-              tooltip: 'Marcar todas como leídas',
-            ),
-          IconButton(
-            icon: const Icon(Icons.bar_chart, color: Colors.white),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ReportsPage(),
-                ),
-              );
-            },
-            tooltip: 'Reportes',
-          ),
-        ],
+        actions: const [],
       ),
       body: Column(
         children: [
@@ -235,7 +212,8 @@ class _AlertsPageState extends ConsumerState<AlertsPage> {
                                                         .notifier)
                                                 .markAsRead(notif.id);
                                           }
-                                          // TODO: Navegar a la acción correspondiente
+                                          // Cerrar la notificación después de marcarla como leída
+                                          Navigator.of(context).pop();
                                         },
                                       )),
                                 ],

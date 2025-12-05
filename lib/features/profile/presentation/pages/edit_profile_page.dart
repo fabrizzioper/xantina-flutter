@@ -89,28 +89,77 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           ),
           centerTitle: true,
         ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.lock_outline,
-                  size: 64,
-                  color: Color(0xFF5A5A5A),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'No tienes permisos para editar tu perfil',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF5A5A5A),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 24),
+              // Foto de perfil (solo lectura)
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF4A2C1A),
+                    width: 2,
                   ),
-                  textAlign: TextAlign.center,
+                  color: Colors.white,
                 ),
-              ],
-            ),
+                child: user?.image != null
+                    ? ImageHelpers.buildBase64Image(
+                        user!.image,
+                        size: 120,
+                      )
+                    : const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.person,
+                            color: Color(0xFF4A2C1A),
+                            size: 64,
+                          ),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 32),
+              // Campo de nombre (solo lectura)
+              _ReadOnlyField(
+                label: 'Nombre:',
+                value: user?.name ?? '',
+              ),
+              const SizedBox(height: 16),
+              // Campo de email (solo lectura)
+              _ReadOnlyField(
+                label: 'Email:',
+                value: user?.email ?? '',
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange[300]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orange[700], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Solo puedes ver tu perfil. Para editarlo, contacta a tu administrador.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange[900],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -766,6 +815,53 @@ class _EditField extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReadOnlyField extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ReadOnlyField({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A3A5F),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+          ),
+          child: Text(
+            value.isEmpty ? 'No disponible' : value,
+            style: TextStyle(
+              fontSize: 16,
+              color: value.isEmpty ? Colors.grey[500] : Colors.black87,
             ),
           ),
         ),

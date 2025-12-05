@@ -92,11 +92,11 @@ class _BusinessChatPageState
             message: messageText,
           );
 
+      // Recargar todos los mensajes para asegurar que vemos nuestro mensaje
+      await _loadMessages();
       setState(() {
-        _messages = [..._messages, newMessage];
         _isSending = false;
       });
-      _scrollToBottom();
     } catch (e) {
       setState(() {
         _isSending = false;

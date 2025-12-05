@@ -5,6 +5,7 @@ import 'business_details_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
 import '../../../../core/utils/image_helpers.dart';
 import '../providers/business_provider.dart';
+import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 
 class MyBusinessesPage extends ConsumerStatefulWidget {
   const MyBusinessesPage({super.key});
@@ -53,25 +54,27 @@ class _MyBusinessesPageState extends ConsumerState<MyBusinessesPage> {
         ),
         centerTitle: true,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const CreateBusinessPage(),
-            ),
-          );
-          
-          // Si se creó un negocio exitosamente, recargar la lista
-          if (result == true) {
-            ref.read(businessStateProvider.notifier).loadBusinesses();
-          }
-        },
-        backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
-        child: const Icon(
-          Icons.add_business,
-          color: Colors.white,
-        ),
-      ),
+      floatingActionButton: ref.watch(authStateProvider).authResponse?.user.role == 'admin'
+          ? FloatingActionButton(
+              onPressed: () async {
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CreateBusinessPage(),
+                  ),
+                );
+                
+                // Si se creó un negocio exitosamente, recargar la lista
+                if (result == true) {
+                  ref.read(businessStateProvider.notifier).loadBusinesses();
+                }
+              },
+              backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+              child: const Icon(
+                Icons.add_business,
+                color: Colors.white,
+              ),
+            )
+          : null,
       body: businessState.isLoading
           ? const Center(
               child: CircularProgressIndicator(

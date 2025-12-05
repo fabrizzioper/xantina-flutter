@@ -5,12 +5,13 @@ import '../../../team/presentation/pages/team_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
 import '../../../business/presentation/providers/business_provider.dart';
 import '../../../chat/presentation/pages/business_chat_page.dart';
+import '../../../chat/presentation/pages/user_chat_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../../chat/presentation/providers/business_chat_provider.dart';
 import '../../../user-auth/presentation/providers/user_auth_provider.dart';
-import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../tasks/presentation/pages/create_task_page.dart';
+import '../../../tasks/presentation/pages/tasks_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../profile/presentation/pages/edit_profile_page.dart';
 
@@ -135,6 +136,53 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ),
         actions: [
+          // Botón de notificaciones con badge (solo para usuarios, no para admin)
+          if (user?.role != 'admin')
+            Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.notifications,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const AlertsPage(),
+                      ),
+                    );
+                  },
+                ),
+                if (notificationState.unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        notificationState.unreadCount > 99
+                            ? '99+'
+                            : notificationState.unreadCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           IconButton(
             icon: const Icon(
               Icons.settings,
@@ -179,7 +227,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const CreateTaskPage(),
+                    builder: (context) => const TasksListPage(),
                   ),
                 );
               },
@@ -201,7 +249,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.add,
+                        Icons.checklist,
                         color: Colors.white,
                         size: 28,
                       ),
@@ -209,7 +257,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     const SizedBox(width: 16),
                     const Expanded(
                       child: Text(
-                        'Toca el más para crear una nueva tarea',
+                        'Ver lista de tareas',
                         style: TextStyle(
                           fontSize: 14,
                           color: Color(0xFF5A5A5A), // Gris oscuro
@@ -221,66 +269,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
             const SizedBox(height: 24),
-            // Card de Report - Ancho completo
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const ReportsPage(),
-                  ),
-                );
-              },
-              child: _InfoCard(
-                title: 'Reporte',
-                child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 20),
-                  // Gráfico circular de porcentaje
-                  Center(
-                    child: SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Círculo de progreso
-                          SizedBox(
-                            width: 120,
-                            height: 120,
-                            child: CircularProgressIndicator(
-                              value: 0.75, // 75%
-                              strokeWidth: 12,
-                              backgroundColor: const Color(0xFFE0E0E0),
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFF4A2C1A),
-                              ),
-                            ),
-                          ),
-                          // Texto en el centro
-                          const Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '75%',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4A2C1A),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20                  ),
-                ],
-              ),
-              ),
-            ),
-            const SizedBox(height: 16),
             // Card de Mensajes del Negocio o Mis Negocios
             if (hasMessages && firstBusiness != null)
               _InfoCard(
@@ -563,14 +551,27 @@ class _HomePageState extends ConsumerState<HomePage> {
                   });
                 },
               ),
+              if (ref.watch(authStateProvider).authResponse?.user.role != 'admin')
+                _BottomNavItem(
+                  icon: Icons.notifications,
+                  label: 'Actualizaciones',
+                  isActive: _currentIndex == 1,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const AlertsPage(),
+                      ),
+                    );
+                  },
+                ),
               _BottomNavItem(
-                icon: Icons.notifications,
-                label: 'Actualizaciones',
-                isActive: _currentIndex == 1,
+                icon: Icons.chat,
+                label: 'Chat',
+                isActive: _currentIndex == 2,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const AlertsPage(),
+                      builder: (context) => const UserChatPage(),
                     ),
                   );
                 },
@@ -578,7 +579,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               _BottomNavItem(
                 icon: Icons.business,
                 label: 'Negocio',
-                isActive: _currentIndex == 2,
+                isActive: _currentIndex == 3,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -591,7 +592,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 _BottomNavItem(
                   icon: Icons.people,
                   label: 'Equipo',
-                  isActive: _currentIndex == 3,
+                  isActive: _currentIndex == 4,
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -715,7 +716,7 @@ class _BottomNavItem extends StatelessWidget {
               icon,
               size: 24,
               color: isActive
-                  ? const Color(0xFF4A2C1A) // Marrón oscuro
+                  ? const Color(0xFF2A1A0A) // Marrón más oscuro y fuerte cuando está activo
                   : const Color(0xFF5A5A5A), // Gris oscuro
             ),
             const SizedBox(height: 2),
@@ -728,9 +729,9 @@ class _BottomNavItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: label.length > 12 ? 9 : 11,
                   color: isActive
-                      ? const Color(0xFF4A2C1A) // Marrón oscuro
+                      ? const Color(0xFF2A1A0A) // Marrón más oscuro y fuerte cuando está activo
                       : const Color(0xFF5A5A5A), // Gris oscuro
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ),
