@@ -81,6 +81,58 @@ class TeamNotifier extends StateNotifier<TeamState> {
       rethrow;
     }
   }
+
+  Future<void> updateTeamUser({
+    required String userId,
+    String? name,
+    String? email,
+    String? password,
+    String? image,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    
+    try {
+      final updatedUser = await _teamRepository.updateTeamUser(
+        userId: userId,
+        name: name,
+        email: email,
+        password: password,
+        image: image,
+      );
+      
+      state = state.copyWith(
+        users: state.users.map((user) {
+          return user.id == userId ? updatedUser : user;
+        }).toList(),
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> deleteTeamUser(String userId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    
+    try {
+      await _teamRepository.deleteTeamUser(userId);
+      
+      state = state.copyWith(
+        users: state.users.where((user) => user.id != userId).toList(),
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+      rethrow;
+    }
+  }
 }
 
 final teamStateProvider =

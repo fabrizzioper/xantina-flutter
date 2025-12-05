@@ -1,24 +1,34 @@
 import 'package:dio/dio.dart';
 import '../../../../core/network/dio_client.dart';
-import 'package:xantina/features/user-auth/domain/entities/app_user.dart';
-import 'package:xantina/features/user-auth/infra/models/user_model.dart';
-import '../../domain/repositories/team_repository.dart';
+import '../../domain/repositories/notification_repository.dart';
 
-class TeamApi implements TeamRepository {
+class NotificationApi implements NotificationRepository {
   final Dio _dio = DioClient.getInstance();
 
   @override
-  Future<List<AppUser>> getTeamUsers() async {
+  Future<List<Notification>> getNotifications() async {
     try {
-      final response = await _dio.get('/team/users');
+      final response = await _dio.get('/notifications');
       final List<dynamic> data = response.data as List<dynamic>;
-      return data
-          .map((json) => UserModel.fromJson(json as Map<String, dynamic>))
-          .toList();
+      return data.map((json) {
+        final map = json as Map<String, dynamic>;
+        return Notification(
+          id: map['id'] as String,
+          userId: map['userId'] as String,
+          type: map['type'] as String,
+          title: map['title'] as String,
+          message: map['message'] as String,
+          businessId: map['businessId'] as String?,
+          senderId: map['senderId'] as String?,
+          isRead: map['isRead'] as bool,
+          createdAt: DateTime.parse(map['createdAt'] as String),
+          updatedAt: DateTime.parse(map['updatedAt'] as String),
+        );
+      }).toList();
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data;
-        String errorMessage = 'Error al obtener usuarios del equipo';
+        String errorMessage = 'Error al obtener notificaciones';
         
         if (responseData is Map<String, dynamic>) {
           final message = responseData['message'];
@@ -38,31 +48,15 @@ class TeamApi implements TeamRepository {
   }
 
   @override
-  Future<AppUser> createTeamUser({
-    required String name,
-    required String email,
-    required String password,
-    required String image,
-  }) async {
+  Future<int> getUnreadCount() async {
     try {
-      final requestData = <String, dynamic>{
-        'name': name,
-        'email': email,
-        'password': password,
-        'image': image,
-      };
-
-      final response = await _dio.post(
-        '/team/users',
-        data: requestData,
-      );
-
-      final data = response.data as Map<String, dynamic>;
-      return UserModel.fromJson(data);
+      final response = await _dio.get('/notifications/unread-count');
+      final map = response.data as Map<String, dynamic>;
+      return map['count'] as int;
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data;
-        String errorMessage = 'Error al crear el usuario';
+        String errorMessage = 'Error al obtener contador de notificaciones';
         
         if (responseData is Map<String, dynamic>) {
           final message = responseData['message'];
@@ -82,31 +76,13 @@ class TeamApi implements TeamRepository {
   }
 
   @override
-  Future<AppUser> updateTeamUser({
-    required String userId,
-    String? name,
-    String? email,
-    String? password,
-    String? image,
-  }) async {
+  Future<void> markAsRead(String notificationId) async {
     try {
-      final requestData = <String, dynamic>{};
-      if (name != null) requestData['name'] = name;
-      if (email != null) requestData['email'] = email;
-      if (password != null) requestData['password'] = password;
-      if (image != null) requestData['image'] = image;
-
-      final response = await _dio.put(
-        '/team/users/$userId',
-        data: requestData,
-      );
-
-      final data = response.data as Map<String, dynamic>;
-      return UserModel.fromJson(data);
+      await _dio.patch('/notifications/$notificationId/read');
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data;
-        String errorMessage = 'Error al actualizar el usuario';
+        String errorMessage = 'Error al marcar notificación como leída';
         
         if (responseData is Map<String, dynamic>) {
           final message = responseData['message'];
@@ -126,13 +102,13 @@ class TeamApi implements TeamRepository {
   }
 
   @override
-  Future<void> deleteTeamUser(String userId) async {
+  Future<void> markAllAsRead() async {
     try {
-      await _dio.delete('/team/users/$userId');
+      await _dio.patch('/notifications/read-all');
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data;
-        String errorMessage = 'Error al eliminar el usuario';
+        String errorMessage = 'Error al marcar todas como leídas';
         
         if (responseData is Map<String, dynamic>) {
           final message = responseData['message'];

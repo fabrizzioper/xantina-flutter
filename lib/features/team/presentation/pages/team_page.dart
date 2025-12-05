@@ -4,6 +4,8 @@ import '../../../../core/utils/image_helpers.dart';
 import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 import '../providers/team_provider.dart';
 import 'add_user_page.dart';
+import 'edit_member_page.dart';
+import '../../../chat/presentation/pages/private_chat_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
 
@@ -216,6 +218,7 @@ class _TeamPageState extends ConsumerState<TeamPage> {
         itemBuilder: (context, index) {
           final user = users[index];
           return _TeamMemberCard(
+            userId: user.id,
             name: user.name,
             email: user.email,
             role: user.role,
@@ -227,13 +230,15 @@ class _TeamPageState extends ConsumerState<TeamPage> {
   }
 }
 
-class _TeamMemberCard extends StatelessWidget {
+class _TeamMemberCard extends ConsumerWidget {
+  final String userId;
   final String name;
   final String email;
   final String role;
   final String? image;
 
   const _TeamMemberCard({
+    required this.userId,
     required this.name,
     required this.email,
     required this.role,
@@ -241,7 +246,7 @@ class _TeamMemberCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -300,7 +305,189 @@ class _TeamMemberCard extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          // Botones de acción
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Botón Editar
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.edit,
+                    label: 'Editar',
+                    color: const Color(0xFF4A2C1A),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => EditMemberPage(
+                            userId: userId,
+                            name: name,
+                            email: email,
+                            role: role,
+                            image: image,
+                          ),
+                        ),
+                      ).then((result) {
+                        if (result == true) {
+                          ref.read(teamStateProvider.notifier).loadTeamUsers();
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Botón Eliminar
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.delete,
+                    label: 'Eliminar',
+                    color: Colors.red,
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Eliminar Usuario'),
+                          content: Text('¿Estás seguro de que deseas eliminar a $name?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('Cancelar'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                                try {
+                                  await ref
+                                      .read(teamStateProvider.notifier)
+                                      .deleteTeamUser(userId);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Usuario eliminado correctamente'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          e.toString().replaceAll('Exception: ', ''),
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Eliminar'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Botón Chat
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.chat,
+                    label: 'Chat',
+                    color: const Color(0xFF4A2C1A),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => PrivateChatPage(
+                            otherUserId: userId,
+                            otherUserName: name,
+                            otherUserImage: image,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDelete = color == Colors.red;
+    
+    return Material(
+      color: isDelete ? color : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDelete ? color : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDelete ? color : color.withOpacity(0.3),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 24,
+                color: isDelete ? Colors.white : color,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDelete ? Colors.white : color,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.visible,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

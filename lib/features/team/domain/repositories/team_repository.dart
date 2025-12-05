@@ -8,4 +8,12 @@ abstract class TeamRepository {
     required String password,
     required String image,
   });
+  Future<AppUser> updateTeamUser({
+    required String userId,
+    String? name,
+    String? email,
+    String? password,
+    String? image,
+  });
+  Future<void> deleteTeamUser(String userId);
 }

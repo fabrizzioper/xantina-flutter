@@ -1,92 +1,113 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
 import '../../../reports/presentation/pages/reports_page.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
+import '../../../notifications/domain/repositories/notification_repository.dart'
+    as notification_domain;
 
-class AlertsPage extends StatefulWidget {
+class AlertsPage extends ConsumerStatefulWidget {
   const AlertsPage({super.key});
 
   @override
-  State<AlertsPage> createState() => _AlertsPageState();
+  ConsumerState<AlertsPage> createState() => _AlertsPageState();
 }
 
-class _AlertsPageState extends State<AlertsPage> {
+class _AlertsPageState extends ConsumerState<AlertsPage> {
   int _currentIndex = 1; // Actualizaciones está activo
   String _selectedFilter = 'Todas'; // Todas, Leídas, No leídas
 
-  // Datos de ejemplo
-  final List<Map<String, dynamic>> _todayAlerts = [
-    {
-      'title': '¡Alerta de Lote Nuevo!',
-      'description':
-          'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-      'timestamp': 'Hace 10 min',
-      'isRead': false,
-    },
-    {
-      'title': '¡Alerta de Guardar Lote!',
-      'description':
-          'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-      'timestamp': 'Hace 30 min',
-      'isRead': false,
-    },
-    {
-      'title': '¡Alerta de Lote Nuevo!',
-      'description':
-          'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-      'timestamp': 'Hace 1 hora',
-      'isRead': true,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Cargar notificaciones cuando se inicia la página
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(notificationStateProvider.notifier).loadNotifications();
+    });
+  }
 
-  final List<Map<String, dynamic>> _yesterdayAlerts = [
-    {
-      'title': 'Ajuste de Receta: Mezcla Espresso',
-      'description':
-          'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-      'timestamp': 'Hace 10 min',
-      'isRead': true,
-    },
-    {
-      'title': 'Ajuste de Receta: Prensa Francesa',
-      'description':
-          'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-      'timestamp': 'Hace 30 min',
-      'isRead': true,
-    },
-  ];
-
-  List<Map<String, dynamic>> _getFilteredAlerts(List<Map<String, dynamic>> alerts) {
+  List<notification_domain.Notification> _getFilteredNotifications(
+      List<notification_domain.Notification> notifications) {
     if (_selectedFilter == 'Todas') {
-      return alerts;
+      return notifications;
     } else if (_selectedFilter == 'Leídas') {
-      return alerts.where((alert) => alert['isRead'] == true).toList();
+      return notifications.where((notif) => notif.isRead).toList();
     } else {
-      return alerts.where((alert) => alert['isRead'] == false).toList();
+      return notifications.where((notif) => !notif.isRead).toList();
     }
+  }
+
+  String _formatTimestamp(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'Hace un momento';
+    } else if (difference.inMinutes < 60) {
+      return 'Hace ${difference.inMinutes} min';
+    } else if (difference.inHours < 24) {
+      return 'Hace ${difference.inHours} hora${difference.inHours > 1 ? 's' : ''}';
+    } else if (difference.inDays < 7) {
+      return 'Hace ${difference.inDays} día${difference.inDays > 1 ? 's' : ''}';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  Map<String, List<notification_domain.Notification>> _groupNotificationsByDate(
+      List<notification_domain.Notification> notifications) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    final todayList = <notification_domain.Notification>[];
+    final yesterdayList = <notification_domain.Notification>[];
+    final olderList = <notification_domain.Notification>[];
+
+    for (final notif in notifications) {
+      final notifDate = DateTime(
+        notif.createdAt.year,
+        notif.createdAt.month,
+        notif.createdAt.day,
+      );
+
+      if (notifDate == today) {
+        todayList.add(notif);
+      } else if (notifDate == yesterday) {
+        yesterdayList.add(notif);
+      } else {
+        olderList.add(notif);
+      }
+    }
+
+    final result = <String, List<notification_domain.Notification>>{};
+    if (todayList.isNotEmpty) result['Hoy'] = todayList;
+    if (yesterdayList.isNotEmpty) result['Ayer'] = yesterdayList;
+    if (olderList.isNotEmpty) result['Anteriores'] = olderList;
+
+    return result;
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredTodayAlerts = _getFilteredAlerts(_todayAlerts);
-    final filteredYesterdayAlerts = _getFilteredAlerts(_yesterdayAlerts);
+    final notificationState = ref.watch(notificationStateProvider);
+    final notifications = notificationState.notifications;
+    final isLoading = notificationState.isLoading;
+    final filteredNotifications = _getFilteredNotifications(notifications);
+    final groupedNotifications = _groupNotificationsByDate(filteredNotifications);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F1E8), // Beige claro
+      backgroundColor: const Color(0xFFF5F1E8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
+        backgroundColor: const Color(0xFF4A2C1A),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Alertas',
+          'Notificaciones',
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -95,11 +116,18 @@ class _AlertsPageState extends State<AlertsPage> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.bar_chart,
-              color: Color(0xFF4A2C1A), // Marrón oscuro
+          if (notificationState.unreadCount > 0)
+            IconButton(
+              icon: const Icon(Icons.done_all, color: Colors.white),
+              onPressed: () async {
+                await ref
+                    .read(notificationStateProvider.notifier)
+                    .markAllAsRead();
+              },
+              tooltip: 'Marcar todas como leídas',
             ),
+          IconButton(
+            icon: const Icon(Icons.bar_chart, color: Colors.white),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -151,60 +179,78 @@ class _AlertsPageState extends State<AlertsPage> {
               ],
             ),
           ),
-          // Lista de alertas
+          // Lista de notificaciones
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              children: [
-                if (filteredTodayAlerts.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Text(
-                      'Hoy',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A3A5F), // Azul oscuro (igual que otras pantallas)
-                      ),
-                      textAlign: TextAlign.center,
+            child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF4A2C1A),
                     ),
-                  ),
-                  ...filteredTodayAlerts.map((alert) => _AlertCard(
-                        title: alert['title'] as String,
-                        description: alert['description'] as String,
-                        timestamp: alert['timestamp'] as String,
-                        isRead: alert['isRead'] as bool,
-                      )),
-                ],
-                if (filteredYesterdayAlerts.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Text(
-                      'Ayer',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A3A5F), // Azul oscuro (igual que otras pantallas)
+                  )
+                : filteredNotifications.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No hay notificaciones',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 16,
+                          ),
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () async {
+                          await ref
+                              .read(notificationStateProvider.notifier)
+                              .loadNotifications();
+                        },
+                        child: ListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          children: [
+                            ...groupedNotifications.entries.map((entry) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    child: Text(
+                                      entry.key,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1A3A5F),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  ...entry.value.map((notif) => _NotificationCard(
+                                        notification: notif,
+                                        timestamp: _formatTimestamp(
+                                            notif.createdAt),
+                                        onTap: () async {
+                                          if (!notif.isRead) {
+                                            await ref
+                                                .read(
+                                                    notificationStateProvider
+                                                        .notifier)
+                                                .markAsRead(notif.id);
+                                          }
+                                          // TODO: Navegar a la acción correspondiente
+                                        },
+                                      )),
+                                ],
+                              );
+                            }),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  ...filteredYesterdayAlerts.map((alert) => _AlertCard(
-                        title: alert['title'] as String,
-                        description: alert['description'] as String,
-                        timestamp: alert['timestamp'] as String,
-                        isRead: alert['isRead'] as bool,
-                      )),
-                ],
-                const SizedBox(height: 24),
-              ],
-            ),
           ),
         ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F1E8), // Beige claro
+          color: const Color(0xFFF5F1E8),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.08),
@@ -279,11 +325,11 @@ class _FilterButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF4A2C1A) // Marrón oscuro cuando está seleccionado
-              : Colors.white, // Blanco cuando no está seleccionado
+              ? const Color(0xFF4A2C1A)
+              : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: const Color(0xFF4A2C1A), // Marrón oscuro
+            color: const Color(0xFF4A2C1A),
             width: 1,
           ),
         ),
@@ -293,8 +339,8 @@ class _FilterButton extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: isSelected
-                ? Colors.white // Blanco cuando está seleccionado
-                : const Color(0xFF4A2C1A), // Marrón oscuro cuando no está seleccionado
+                ? Colors.white
+                : const Color(0xFF4A2C1A),
           ),
         ),
       ),
@@ -302,98 +348,133 @@ class _FilterButton extends StatelessWidget {
   }
 }
 
-class _AlertCard extends StatelessWidget {
-  final String title;
-  final String description;
+class _NotificationCard extends StatelessWidget {
+  final notification_domain.Notification notification;
   final String timestamp;
-  final bool isRead;
+  final VoidCallback onTap;
 
-  const _AlertCard({
-    required this.title,
-    required this.description,
+  const _NotificationCard({
+    required this.notification,
     required this.timestamp,
-    required this.isRead,
+    required this.onTap,
   });
+
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'business_message':
+        return Icons.chat;
+      case 'user_added_to_business':
+        return Icons.person_add;
+      case 'direct_message':
+        return Icons.message;
+      default:
+        return Icons.notifications;
+    }
+  }
+
+  Color _getColorForType(String type) {
+    switch (type) {
+      case 'business_message':
+        return const Color(0xFF2196F3); // Azul
+      case 'user_added_to_business':
+        return const Color(0xFF4CAF50); // Verde
+      case 'direct_message':
+        return const Color(0xFFFF9800); // Naranja
+      default:
+        return const Color(0xFFFFA726); // Amarillo
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white, // Blanco
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: notification.isRead
+              ? null
+              : Border.all(
+                  color: const Color(0xFF4A2C1A),
+                  width: 2,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF5A5A5A), // Gris oscuro
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  timestamp,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF9E9E9E), // Gris claro
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Icono con punto de notificación
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFA726), // Naranja/amarillo claro
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: Icon(
-                    Icons.description,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                if (!isRead)
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF6F00), // Naranja más oscuro
-                        shape: BoxShape.circle,
-                      ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    notification.title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: notification.isRead
+                          ? FontWeight.w500
+                          : FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    notification.message,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF5A5A5A),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    timestamp,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9E9E9E),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            // Icono con punto de notificación
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _getColorForType(notification.type),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Icon(
+                      _getIconForType(notification.type),
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  if (!notification.isRead)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFF6F00),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -420,7 +501,7 @@ class _BottomNavItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: isActive
-              ? const Color(0xFFF5F1E8) // Beige claro
+              ? const Color(0xFFF5F1E8)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -433,8 +514,8 @@ class _BottomNavItem extends StatelessWidget {
               icon,
               size: 24,
               color: isActive
-                  ? const Color(0xFF4A2C1A) // Marrón oscuro
-                  : const Color(0xFF5A5A5A), // Gris oscuro
+                  ? const Color(0xFF4A2C1A)
+                  : const Color(0xFF5A5A5A),
             ),
             const SizedBox(height: 2),
             Flexible(
@@ -446,8 +527,8 @@ class _BottomNavItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: label.length > 12 ? 9 : 11,
                   color: isActive
-                      ? const Color(0xFF4A2C1A) // Marrón oscuro
-                      : const Color(0xFF5A5A5A), // Gris oscuro
+                      ? const Color(0xFF4A2C1A)
+                      : const Color(0xFF5A5A5A),
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
@@ -458,4 +539,3 @@ class _BottomNavItem extends StatelessWidget {
     );
   }
 }
-

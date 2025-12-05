@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/utils/image_helpers.dart';
 import '../../../team/presentation/pages/team_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
+import '../../../business/presentation/providers/business_provider.dart';
+import '../../../chat/presentation/pages/business_chat_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
+import '../../../chat/presentation/providers/business_chat_provider.dart';
 import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../tasks/presentation/pages/create_task_page.dart';
@@ -22,9 +25,67 @@ class _HomePageState extends ConsumerState<HomePage> {
   int _currentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Cargar negocios y notificaciones al iniciar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(businessStateProvider.notifier).loadBusinesses();
+      ref.read(notificationStateProvider.notifier).loadNotifications();
+    });
+  }
+
+  String _formatMessageTime(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'Hace un momento';
+    } else if (difference.inMinutes < 60) {
+      return 'Hace ${difference.inMinutes} min';
+    } else if (difference.inHours < 24) {
+      return 'Hace ${difference.inHours} hora${difference.inHours > 1 ? 's' : ''}';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  String _formatNotificationTime(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'Hace un momento';
+    } else if (difference.inMinutes < 60) {
+      return 'Hace ${difference.inMinutes} min';
+    } else if (difference.inHours < 24) {
+      return 'Hace ${difference.inHours} hora${difference.inHours > 1 ? 's' : ''}';
+    } else if (difference.inDays < 7) {
+      return 'Hace ${difference.inDays} día${difference.inDays > 1 ? 's' : ''}';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final user = authState.authResponse?.user;
+    final businessState = ref.watch(businessStateProvider);
+    final notificationState = ref.watch(notificationStateProvider);
+    
+    // Obtener el primer negocio para cargar sus mensajes
+    final firstBusiness = businessState.businesses.isNotEmpty
+        ? businessState.businesses.first
+        : null;
+    
+    // Obtener últimos mensajes del negocio si existe
+    final businessChatState = firstBusiness != null && firstBusiness.id.isNotEmpty
+        ? ref.watch(businessChatStateProvider(firstBusiness.id))
+        : null;
+    
+    final latestMessages = businessChatState?.messages ?? [];
+    final hasMessages = latestMessages.isNotEmpty;
+    final latestNotifications = notificationState.notifications.take(3).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1E8),
@@ -49,14 +110,13 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const Text(
-                      'Hello,',
+                      'Hola, ',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 16,
                         color: Colors.white70,
                       ),
                     ),
@@ -221,124 +281,256 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
             const SizedBox(height: 16),
-            // Card de Team Members - Ancho completo
-            _InfoCard(
-              title: 'Miembros del Equipo',
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  // Avatar y nombre
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4A2C1A),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
+            // Card de Mensajes del Negocio o Mis Negocios
+            if (hasMessages && firstBusiness != null)
+              _InfoCard(
+                title: 'Últimos Mensajes',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    ...latestMessages.take(3).map((message) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Bella Throne',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF1A3A5F),
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4A2C1A),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 24,
                               ),
                             ),
-                            SizedBox(height: 2),
-                            Text(
-                              'June 12, 2020 - 19:35',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Color(0xFF5A5A5A),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    message.senderName ?? 'Usuario',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1A3A5F),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _formatMessageTime(message.createdAt),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Color(0xFF5A5A5A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    message.message,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF5A5A5A),
+                                      height: 1.4,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      _ReactionButton(
+                                        icon: Icons.thumb_up,
+                                        count: message.likes,
+                                        color: Colors.green,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      _ReactionButton(
+                                        icon: Icons.thumb_down,
+                                        count: message.dislikes,
+                                        color: Colors.red,
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => BusinessChatPage(
+                                businessId: firstBusiness.id,
+                                businessName: firstBusiness.name,
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Ver más',
+                          style: TextStyle(
+                            color: Color(0xFF4A2C1A),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Mensaje
-                  const Text(
-                    "We've just finalized a new espresso recipe using the new washed Ethiopia lot. Please review the updated grind size and extraction time before tomorrow's shift.",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF5A5A5A),
-                      height: 1.4,
                     ),
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 16),
-                  // Reacciones
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      _ReactionButton(
-                        icon: Icons.thumb_up,
-                        count: 9,
-                        color: Colors.green,
+                  ],
+                ),
+              )
+            else if (firstBusiness == null && businessState.businesses.isEmpty)
+              _InfoCard(
+                title: 'Mis Negocios',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 20),
+                    const Text(
+                      'No tienes negocios aún',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF5A5A5A),
                       ),
-                      const SizedBox(width: 16),
-                      _ReactionButton(
-                        icon: Icons.comment,
-                        count: 2,
-                        color: Colors.blue,
+                    ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const MyBusinessesPage(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Ver más',
+                          style: TextStyle(
+                            color: Color(0xFF4A2C1A),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                    ),
+                  ],
+                ),
+              )
+            else
+              _InfoCard(
+                title: 'Mis Negocios',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 8),
+                    ...businessState.businesses.take(3).map((business) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            ImageHelpers.buildBusinessLogo(business.logo, size: 50),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    business.name,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1A3A5F),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    business.address,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF5A5A5A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const MyBusinessesPage(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Ver más',
+                          style: TextStyle(
+                            color: Color(0xFF4A2C1A),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 16),
-            // Card de Alerts
-            _InfoCard(
-              title: 'Alertas',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Hoy',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF5A5A5A),
-                      fontWeight: FontWeight.w500,
+            // Card de Alertas (últimas 3)
+            if (latestNotifications.isNotEmpty)
+              _InfoCard(
+                title: 'Alertas',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    ...latestNotifications.map((notif) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _AlertItem(
+                          title: notif.title,
+                          message: notif.message,
+                          time: _formatNotificationTime(notif.createdAt),
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const AlertsPage(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Ver más',
+                          style: TextStyle(
+                            color: Color(0xFF4A2C1A),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _AlertItem(
-                    title: '¡Alerta de Nuevo Lote!',
-                    message:
-                        'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-                    time: 'Hace 30 min',
-                  ),
-                  const SizedBox(height: 12),
-                  _AlertItem(
-                    title: '¡Alerta de Nuevo Lote!',
-                    message:
-                        'Lorem Ipsum tempor incididunt ut labore et dolore, in voluptate velit esse cillum',
-                    time: 'Hace 30 min',
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 24),
           ],
         ),

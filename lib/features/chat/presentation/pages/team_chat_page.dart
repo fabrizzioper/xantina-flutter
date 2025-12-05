@@ -15,25 +15,25 @@ class _TeamChatPageState extends State<TeamChatPage> {
   final List<Map<String, dynamic>> _messages = [
     {
       'name': 'Bella Throne',
-      'timestamp': 'June 12, 2020 - 19:35',
+      'timestamp': '12 de junio, 2020 - 19:35',
       'message':
-          'We\'ve just finalized a new espresso recipe using the new washed Ethiopia lot. Please review the updated grind size and extraction time before tomorrow\'s shift.',
+          'Acabamos de finalizar una nueva receta de espresso usando el nuevo lote de Etiopía lavado. Por favor revisa el tamaño de molienda y el tiempo de extracción actualizados antes del turno de mañana.',
       'likes': 9,
       'dislikes': 2,
     },
     {
       'name': 'Christopher Oshana',
-      'timestamp': 'June 12, 2020 - 19:35',
+      'timestamp': '12 de junio, 2020 - 19:35',
       'message':
-          'Heads up: we\'re low on our current Brazil lot. A new one arrives on Thursday. Please monitor usage and mark remaining stock in the app.',
+          'Aviso: nos estamos quedando sin nuestro lote actual de Brasil. Uno nuevo llega el jueves. Por favor monitorea el uso y marca el stock restante en la app.',
       'likes': 7,
       'dislikes': 1,
     },
     {
       'name': 'Kyle Austin',
-      'timestamp': 'June 12, 2020 - 19:35',
+      'timestamp': '12 de junio, 2020 - 19:35',
       'message':
-          'Please remember to complete the calibration checklist before starting your shift. Reach out if anything is missing from the station.',
+          'Por favor recuerda completar la lista de verificación de calibración antes de comenzar tu turno. Avísame si falta algo en la estación.',
       'likes': 7,
       'dislikes': 1,
     },
@@ -46,15 +46,36 @@ class _TeamChatPageState extends State<TeamChatPage> {
     super.dispose();
   }
 
+  String _getMonthName(int month) {
+    const months = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
+    ];
+    return months[month - 1];
+  }
+
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
 
+    final now = DateTime.now();
+    final formattedDate = '${now.day} de ${_getMonthName(now.month)}, ${now.year} - ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    
     setState(() {
       _messages.insert(
         0,
         {
           'name': 'Yo',
-          'timestamp': 'Ahora',
+          'timestamp': formattedDate,
           'message': _messageController.text.trim(),
           'likes': 0,
           'dislikes': 0,
@@ -92,7 +113,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
           },
         ),
         title: const Text(
-          'Team Chat',
+          'Chat del Equipo',
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -111,7 +132,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Leave a comment',
+                  'Dejar un comentario',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -125,7 +146,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
                       child: TextField(
                         controller: _messageController,
                         decoration: InputDecoration(
-                          hintText: 'Say something...',
+                          hintText: 'Di algo...',
                           hintStyle: const TextStyle(
                             color: Color(0xFF9E9E9E),
                           ),
@@ -174,7 +195,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
                         elevation: 0,
                       ),
                       child: const Text(
-                        'Send',
+                        'Enviar',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

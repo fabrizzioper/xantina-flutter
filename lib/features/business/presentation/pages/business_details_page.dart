@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'add_members_page.dart';
 import 'business_members_page.dart';
-import '../../../chat/presentation/pages/team_chat_page.dart';
+import '../../../chat/presentation/pages/business_chat_page.dart';
 
 class BusinessDetailsPage extends StatelessWidget {
   final String businessId;
@@ -74,7 +74,10 @@ class BusinessDetailsPage extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => const TeamChatPage(),
+                  builder: (context) => BusinessChatPage(
+                    businessId: businessId,
+                    businessName: businessName,
+                  ),
                 ),
               );
             },
