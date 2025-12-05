@@ -26,9 +26,10 @@ class _AddMembersPageState extends ConsumerState<AddMembersPage> {
   @override
   void initState() {
     super.initState();
-    // Cargar usuarios del equipo
+    // Cargar usuarios del equipo y miembros actuales del negocio
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(teamStateProvider.notifier).loadTeamUsers();
+      ref.read(businessMemberStateProvider(widget.businessId).notifier).loadMembers(widget.businessId);
     });
     _searchController.addListener(() => setState(() {}));
   }
@@ -39,12 +40,15 @@ class _AddMembersPageState extends ConsumerState<AddMembersPage> {
     super.dispose();
   }
 
-  List<AppUser> _getFilteredUsers(List<AppUser> users) {
+  List<AppUser> _getFilteredUsers(List<AppUser> users, Set<String> excludeIds) {
+    // Filtrar usuarios que ya son miembros del negocio
+    final availableUsers = users.where((user) => !excludeIds.contains(user.id)).toList();
+    
     final query = _searchController.text.toLowerCase().trim();
     if (query.isEmpty) {
-      return users; // Mostrar todos cuando no hay búsqueda
+      return availableUsers; // Mostrar todos los disponibles cuando no hay búsqueda
     }
-    return users.where((user) {
+    return availableUsers.where((user) {
       return user.name.toLowerCase().contains(query) ||
           user.email.toLowerCase().contains(query);
     }).toList();
@@ -55,7 +59,13 @@ class _AddMembersPageState extends ConsumerState<AddMembersPage> {
     final teamState = ref.watch(teamStateProvider);
     final users = teamState.users;
     final isLoading = teamState.isLoading;
-    final filteredUsers = _getFilteredUsers(users);
+    
+    // Obtener miembros actuales del negocio para excluirlos de la lista
+    final memberState = ref.watch(businessMemberStateProvider(widget.businessId));
+    final currentMembers = memberState.members;
+    final currentMemberIds = currentMembers.map((m) => m.id).toSet();
+    
+    final filteredUsers = _getFilteredUsers(users, currentMemberIds);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1E8),
@@ -156,17 +166,25 @@ class _AddMembersPageState extends ConsumerState<AddMembersPage> {
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(
-                                        Icons.search_off,
+                                      Icon(
+                                        currentMemberIds.length >= users.length
+                                            ? Icons.check_circle_outline
+                                            : Icons.search_off,
                                         size: 64,
-                                        color: Color(0xFF5A5A5A),
+                                        color: currentMemberIds.length >= users.length
+                                            ? Colors.green[600]
+                                            : const Color(0xFF5A5A5A),
                                       ),
                                       const SizedBox(height: 16),
-                                      const Text(
-                                        'No se encontraron usuarios',
+                                      Text(
+                                        currentMemberIds.length >= users.length
+                                            ? 'Todos tus usuarios ya están agregados a este negocio'
+                                            : 'No se encontraron usuarios disponibles',
                                         style: TextStyle(
                                           fontSize: 16,
-                                          color: Color(0xFF5A5A5A),
+                                          color: currentMemberIds.length >= users.length
+                                              ? Colors.green[700]
+                                              : const Color(0xFF5A5A5A),
                                         ),
                                         textAlign: TextAlign.center,
                                       ),

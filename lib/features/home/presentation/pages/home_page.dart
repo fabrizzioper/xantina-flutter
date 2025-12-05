@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
 import '../../../../core/utils/image_helpers.dart';
 import '../../../team/presentation/pages/team_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
@@ -12,6 +13,7 @@ import '../../../chat/presentation/providers/business_chat_provider.dart';
 import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 import '../../../tasks/presentation/pages/create_task_page.dart';
 import '../../../tasks/presentation/pages/tasks_list_page.dart';
+import '../../../tasks/presentation/providers/task_provider.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../profile/presentation/pages/edit_profile_page.dart';
 
@@ -136,53 +138,52 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ),
         actions: [
-          // Botón de notificaciones con badge (solo para usuarios, no para admin)
-          if (user?.role != 'admin')
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.notifications,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const AlertsPage(),
-                      ),
-                    );
-                  },
+          // Botón de notificaciones con badge (para todos)
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.notifications,
+                  color: Colors.white,
+                  size: 24,
                 ),
-                if (notificationState.unreadCount > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AlertsPage(),
+                    ),
+                  );
+                },
+              ),
+              if (user?.role != 'admin' && notificationState.unreadCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Text(
+                      notificationState.unreadCount > 99
+                          ? '99+'
+                          : notificationState.unreadCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                       ),
-                      constraints: const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
-                      ),
-                      child: Text(
-                        notificationState.unreadCount > 99
-                            ? '99+'
-                            : notificationState.unreadCount.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
+          ),
           IconButton(
             icon: const Icon(
               Icons.settings,
@@ -223,51 +224,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
             const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const TasksListPage(),
-                  ),
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4A2C1A), // Marrón oscuro
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.checklist,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Text(
-                        'Ver lista de tareas',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF5A5A5A), // Gris oscuro
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // Preview de tareas
+            _TasksPreviewCard(),
             const SizedBox(height: 24),
             // Card de Mensajes del Negocio o Mis Negocios
             if (hasMessages && firstBusiness != null)
@@ -551,19 +509,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                   });
                 },
               ),
-              if (ref.watch(authStateProvider).authResponse?.user.role != 'admin')
-                _BottomNavItem(
-                  icon: Icons.notifications,
-                  label: 'Actualizaciones',
-                  isActive: _currentIndex == 1,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const AlertsPage(),
-                      ),
-                    );
-                  },
-                ),
               _BottomNavItem(
                 icon: Icons.chat,
                 label: 'Chat',
@@ -806,6 +751,381 @@ class _AlertItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TasksPreviewCard extends ConsumerWidget {
+  const _TasksPreviewCard();
+
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'pending':
+        return 'Pendiente';
+      case 'in_progress':
+        return 'En progreso';
+      case 'completed':
+        return 'Completada';
+      default:
+        return status;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange;
+      case 'in_progress':
+        return Colors.blue;
+      case 'completed':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatTaskTime(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'Hace un momento';
+    } else if (difference.inMinutes < 60) {
+      return 'Hace ${difference.inMinutes} min';
+    } else if (difference.inHours < 24) {
+      return 'Hace ${difference.inHours} hora${difference.inHours > 1 ? 's' : ''}';
+    } else if (difference.inDays < 7) {
+      return 'Hace ${difference.inDays} día${difference.inDays > 1 ? 's' : ''}';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  Widget _buildTaskPreviewImage(String? base64Image) {
+    if (base64Image == null || base64Image.isEmpty) {
+      return Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(
+          Icons.image,
+          color: Colors.grey,
+          size: 24,
+        ),
+      );
+    }
+
+    try {
+      final base64String = base64Image.contains(',')
+          ? base64Image.split(',').last
+          : base64Image;
+      
+      final bytes = base64Decode(base64String);
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.memory(
+          bytes,
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.broken_image,
+                color: Colors.grey,
+                size: 24,
+              ),
+            );
+          },
+        ),
+      );
+    } catch (_) {
+      return Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(
+          Icons.image,
+          color: Colors.grey,
+          size: 24,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.authResponse?.user;
+    final isAdmin = user?.role == 'admin';
+    
+    final tasksAsync = isAdmin 
+        ? ref.watch(tasksAssignedByMeProvider)
+        : ref.watch(tasksAssignedToMeProvider);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Tareas',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF4A2C1A),
+                ),
+              ),
+              Row(
+                children: [
+                  // Botón para crear nueva tarea (solo para admin)
+                  if (isAdmin)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.add_circle_outline,
+                        color: Color(0xFF4A2C1A),
+                        size: 24,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const CreateTaskPage(),
+                          ),
+                        );
+                      },
+                      tooltip: 'Agregar nueva tarea',
+                    ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const TasksListPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Ver todas',
+                      style: TextStyle(
+                        color: Color(0xFF4A2C1A),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          tasksAsync.when(
+            data: (tasks) {
+              if (tasks.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.task_alt,
+                        size: 40,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          isAdmin ? 'No has creado tareas aún' : 'No tienes tareas asignadas',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final previewTasks = tasks.take(3).toList();
+              return Column(
+                children: [
+                  ...previewTasks.map((task) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const TasksListPage(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F1E8).withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.grey[300]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Imagen de la tarea (si tiene)
+                              if (task.images.isNotEmpty)
+                                _buildTaskPreviewImage(task.images.first)
+                              else
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF4A2C1A).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.checklist,
+                                    color: Color(0xFF4A2C1A),
+                                    size: 24,
+                                  ),
+                                ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      task.title,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1A3A5F),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      task.description,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[700],
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: _getStatusColor(task.status).withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            _getStatusText(task.status),
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: _getStatusColor(task.status),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _formatTaskTime(task.createdAt),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  if (tasks.length > 3)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Center(
+                        child: Text(
+                          'Y ${tasks.length - 3} tarea${tasks.length - 3 > 1 ? 's' : ''} más',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF4A2C1A),
+                  ),
+                ),
+              ),
+            ),
+            error: (error, stack) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 40,
+                    color: Colors.red[300],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Error al cargar tareas',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.red[600],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

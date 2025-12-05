@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/image_helpers.dart';
 import '../../../user-auth/presentation/providers/user_auth_provider.dart';
+import '../../../team/presentation/providers/team_provider.dart';
 import '../../infra/datasources/task_api.dart';
 import '../../domain/entities/task.dart';
 import '../../domain/repositories/task_repository.dart';
@@ -17,6 +18,15 @@ class TasksListPage extends ConsumerStatefulWidget {
 
 class _TasksListPageState extends ConsumerState<TasksListPage> {
   final TaskRepository _taskRepository = TaskApi();
+
+  @override
+  void initState() {
+    super.initState();
+    // Cargar usuarios del equipo para poder mostrar nombres en las tareas
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(teamStateProvider.notifier).loadTeamUsers();
+    });
+  }
 
   Future<void> _updateTaskStatus(String taskId, String status) async {
     try {
@@ -187,7 +197,7 @@ class _TasksListPageState extends ConsumerState<TasksListPage> {
             itemCount: tasks.length,
             itemBuilder: (context, index) {
               final task = tasks[index];
-              return _buildTaskCard(task, isAdmin: true);
+              return _buildTaskCard(task, isAdmin: true, assignedByName: null);
             },
           ),
         );
@@ -227,6 +237,14 @@ class _TasksListPageState extends ConsumerState<TasksListPage> {
 
   Widget _buildUserView() {
     final tasksAsync = ref.watch(tasksAssignedToMeProvider);
+    final teamState = ref.watch(teamStateProvider);
+    final teamUsers = teamState.users;
+    
+    // Crear un mapa de userId -> nombre para búsqueda rápida
+    final userMap = <String, String>{};
+    for (final user in teamUsers) {
+      userMap[user.id] = user.name;
+    }
 
     return tasksAsync.when(
       data: (tasks) {
@@ -257,13 +275,18 @@ class _TasksListPageState extends ConsumerState<TasksListPage> {
         return RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(tasksAssignedToMeProvider);
+            ref.read(teamStateProvider.notifier).loadTeamUsers();
           },
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: tasks.length,
             itemBuilder: (context, index) {
               final task = tasks[index];
-              return _buildTaskCard(task, isAdmin: false);
+              return _buildTaskCard(
+                task, 
+                isAdmin: false,
+                assignedByName: userMap[task.assignedByUserId] ?? 'Administrador',
+              );
             },
           ),
         );
@@ -301,7 +324,7 @@ class _TasksListPageState extends ConsumerState<TasksListPage> {
     );
   }
 
-  Widget _buildTaskCard(Task task, {required bool isAdmin}) {
+  Widget _buildTaskCard(Task task, {required bool isAdmin, String? assignedByName}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
@@ -335,6 +358,28 @@ class _TasksListPageState extends ConsumerState<TasksListPage> {
                           color: Colors.grey[700],
                         ),
                       ),
+                      // Mostrar "quien te lo asignó" para usuarios
+                      if (!isAdmin && assignedByName != null) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Asignado por: $assignedByName',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

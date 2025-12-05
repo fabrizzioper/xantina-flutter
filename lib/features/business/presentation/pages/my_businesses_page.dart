@@ -185,11 +185,13 @@ class _MyBusinessesPageState extends ConsumerState<MyBusinessesPage> {
   }
 }
 
-class _EmptyBusinessesView extends StatelessWidget {
+class _EmptyBusinessesView extends ConsumerWidget {
   const _EmptyBusinessesView();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(authStateProvider).authResponse?.user.role == 'admin';
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -210,18 +212,22 @@ class _EmptyBusinessesView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
-              'No tienes negocios',
-              style: TextStyle(
+            Text(
+              isAdmin
+                  ? 'No tienes negocios'
+                  : 'No perteneces a ningún negocio',
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF1A3A5F), // Azul oscuro
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Usa el botón + para crear tu primer negocio',
-              style: TextStyle(
+            Text(
+              isAdmin
+                  ? 'Usa el botón + para crear tu primer negocio'
+                  : 'Pide a tu administrador que te agregue a un negocio',
+              style: const TextStyle(
                 fontSize: 16,
                 color: Color(0xFF5A5A5A), // Gris oscuro
               ),
