@@ -16,3 +16,4 @@ final tasksAssignedByMeProvider = FutureProvider<List<Task>>((ref) async {
   final repository = ref.watch(taskRepositoryProvider);
   return repository.getTasksAssignedByMe();
 });
+

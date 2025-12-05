@@ -16,6 +16,7 @@ class BusinessChatMessage {
   final String senderId;
   final String message;
   final String? senderName;
+  final String? senderImage;
   final int likes;
   final int dislikes;
   final DateTime createdAt;
@@ -27,6 +28,7 @@ class BusinessChatMessage {
     required this.senderId,
     required this.message,
     this.senderName,
+    this.senderImage,
     required this.likes,
     required this.dislikes,
     required this.createdAt,

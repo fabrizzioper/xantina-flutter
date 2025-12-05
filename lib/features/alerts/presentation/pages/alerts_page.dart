@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
+import '../../../business/presentation/pages/business_details_page.dart';
+import '../../../business/infra/datasources/business_api.dart';
+import '../../../chat/presentation/pages/business_chat_page.dart';
+import '../../../chat/presentation/pages/private_chat_page.dart';
+import '../../../team/presentation/providers/team_provider.dart';
+import '../../../user-auth/domain/entities/app_user.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../../notifications/domain/repositories/notification_repository.dart'
     as notification_domain;
@@ -86,6 +92,116 @@ class _AlertsPageState extends ConsumerState<AlertsPage> {
     if (olderList.isNotEmpty) result['Anteriores'] = olderList;
 
     return result;
+  }
+
+  Future<void> _handleNotificationTap(
+    BuildContext context,
+    WidgetRef ref,
+    notification_domain.Notification notification,
+  ) async {
+    // Marcar como leída
+    if (!notification.isRead) {
+      await ref.read(notificationStateProvider.notifier).markAsRead(notification.id);
+    }
+
+    // Navegar según el tipo de notificación
+    if (!mounted) return;
+
+    switch (notification.type) {
+      case 'business_message':
+        // Navegar al chat del negocio
+        if (notification.businessId != null) {
+          try {
+            final businessRepository = BusinessApi();
+            final business = await businessRepository.getBusinessById(notification.businessId!);
+            if (mounted) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => BusinessChatPage(
+                    businessId: notification.businessId!,
+                    businessName: business.name,
+                  ),
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error al cargar el negocio'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        }
+        break;
+
+      case 'direct_message':
+        // Navegar al chat privado
+        if (notification.senderId != null) {
+          // Intentar obtener el nombre del usuario de la lista de equipo
+          await ref.read(teamStateProvider.notifier).loadTeamUsers();
+          final teamState = ref.read(teamStateProvider);
+          AppUser? sender;
+          try {
+            sender = teamState.users.firstWhere(
+              (user) => user.id == notification.senderId,
+            );
+          } catch (e) {
+            sender = null;
+          }
+          
+          if (mounted) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => PrivateChatPage(
+                  otherUserId: notification.senderId!,
+                  otherUserName: sender?.name ?? 'Usuario',
+                  otherUserImage: sender?.image,
+                ),
+              ),
+            );
+          }
+        }
+        break;
+
+      case 'user_added_to_business':
+        // Navegar al negocio
+        if (notification.businessId != null) {
+          try {
+            final businessRepository = BusinessApi();
+            final business = await businessRepository.getBusinessById(notification.businessId!);
+            if (mounted) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => BusinessDetailsPage(
+                    businessId: notification.businessId!,
+                    businessName: business.name,
+                  ),
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error al cargar el negocio'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        }
+        break;
+
+      default:
+        // Para otros tipos, simplemente cerrar
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+        break;
+    }
   }
 
   @override
@@ -204,17 +320,7 @@ class _AlertsPageState extends ConsumerState<AlertsPage> {
                                         notification: notif,
                                         timestamp: _formatTimestamp(
                                             notif.createdAt),
-                                        onTap: () async {
-                                          if (!notif.isRead) {
-                                            await ref
-                                                .read(
-                                                    notificationStateProvider
-                                                        .notifier)
-                                                .markAsRead(notif.id);
-                                          }
-                                          // Cerrar la notificación después de marcarla como leída
-                                          Navigator.of(context).pop();
-                                        },
+                                        onTap: () => _handleNotificationTap(context, ref, notif),
                                       )),
                                 ],
                               );
@@ -368,13 +474,23 @@ class _NotificationCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
           border: notification.isRead
-              ? null
+              ? Border.all(
+                  color: const Color(0xFFE0E0E0),
+                  width: 1,
+                )
               : Border.all(
                   color: const Color(0xFF4A2C1A),
                   width: 2,
@@ -383,71 +499,88 @@ class _NotificationCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    notification.title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: notification.isRead
-                          ? FontWeight.w500
-                          : FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    notification.message,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF5A5A5A),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    timestamp,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF9E9E9E),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Icono con punto de notificación
+            // Icono con fondo
             Container(
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: _getColorForType(notification.type),
-                borderRadius: BorderRadius.circular(8),
+                color: _getColorForType(notification.type).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Stack(
                 children: [
                   Center(
                     child: Icon(
                       _getIconForType(notification.type),
-                      color: Colors.white,
+                      color: _getColorForType(notification.type),
                       size: 24,
                     ),
                   ),
                   if (!notification.isRead)
                     Positioned(
-                      top: 4,
-                      right: 4,
+                      top: 0,
+                      right: 0,
                       child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFF6F00),
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6F00),
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Contenido
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notification.title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: notification.isRead
+                                ? FontWeight.w600
+                                : FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    notification.message,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: const Color(0xFF5A5A5A),
+                      height: 1.4,
+                      fontWeight: notification.isRead
+                          ? FontWeight.normal
+                          : FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    timestamp,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9E9E9E),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),

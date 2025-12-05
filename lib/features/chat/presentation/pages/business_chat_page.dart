@@ -364,18 +364,9 @@ class _ChatMessageCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Foto de perfil
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFF4A2C1A),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 28,
-            ),
+          ImageHelpers.buildBase64Image(
+            message.senderImage,
+            size: 48,
           ),
           const SizedBox(width: 12),
           // Contenido del mensaje
