@@ -57,9 +57,52 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
         image: image,
       );
+      
+      // Guardar token y usuario
+      await LocalStorage.saveAccessToken(response.accessToken);
+      await LocalStorage.saveUser(response.user);
+      
       state = AuthState.authenticated(response);
     } catch (e) {
       state = AuthState.error(e.toString());
+    }
+  }
+
+  Future<void> updateProfile({
+    String? name,
+    String? email,
+    String? image,
+  }) async {
+    if (state.authResponse == null) return;
+    
+    final previousAuthResponse = state.authResponse;
+    state = const AuthState.loading();
+    
+    try {
+      final updatedUser = await _userAuthRepository.updateProfile(
+        name: name,
+        email: email,
+        image: image,
+      );
+      
+      // Actualizar el usuario en el estado
+      final newAuthResponse = AuthResponse(
+        accessToken: previousAuthResponse!.accessToken,
+        user: updatedUser,
+      );
+      
+      // Guardar usuario actualizado
+      await LocalStorage.saveUser(updatedUser);
+      
+      state = AuthState.authenticated(newAuthResponse);
+    } catch (e) {
+      // Restaurar estado anterior en caso de error
+      if (previousAuthResponse != null) {
+        state = AuthState.authenticated(previousAuthResponse);
+      } else {
+        state = const AuthState.initial();
+      }
+      rethrow;
     }
   }
 

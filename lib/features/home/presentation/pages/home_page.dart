@@ -5,11 +5,11 @@ import '../../../../core/utils/image_helpers.dart';
 import '../../../team/presentation/pages/team_page.dart';
 import '../../../business/presentation/pages/my_businesses_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
+import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../tasks/presentation/pages/create_task_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../profile/presentation/pages/edit_profile_page.dart';
-import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -395,6 +395,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                   );
                 },
               ),
+              if (ref.watch(authStateProvider).authResponse?.user.role == 'admin')
+                _BottomNavItem(
+                  icon: Icons.people,
+                  label: 'Equipo',
+                  isActive: _currentIndex == 3,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const TeamPage(),
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
         ),

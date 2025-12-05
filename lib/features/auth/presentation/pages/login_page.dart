@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../user-auth/presentation/providers/user_auth_provider.dart';
 import '../../../home/presentation/pages/home_page.dart';
+import 'register_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -149,6 +150,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                 ),
+              ),
+              const SizedBox(height: 24),
+              // Link para ir a Registro
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    '¿No tienes cuenta? ',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF5A5A5A),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Regístrate',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4A2C1A),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 40),
             ],

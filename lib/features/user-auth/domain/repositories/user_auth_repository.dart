@@ -8,6 +8,11 @@ abstract class UserAuthRepository {
     required String password,
     String? image,
   });
+  Future<AppUser> updateProfile({
+    String? name,
+    String? email,
+    String? image,
+  });
 }
 
 class AuthResponse {
