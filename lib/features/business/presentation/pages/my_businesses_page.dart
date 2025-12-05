@@ -1,29 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'create_business_page.dart';
 import 'business_details_page.dart';
 import '../../../alerts/presentation/pages/alerts_page.dart';
+import '../../../../core/utils/image_helpers.dart';
+import '../providers/business_provider.dart';
 
-class MyBusinessesPage extends StatefulWidget {
+class MyBusinessesPage extends ConsumerStatefulWidget {
   const MyBusinessesPage({super.key});
 
   @override
-  State<MyBusinessesPage> createState() => _MyBusinessesPageState();
+  ConsumerState<MyBusinessesPage> createState() => _MyBusinessesPageState();
 }
 
-class _MyBusinessesPageState extends State<MyBusinessesPage> {
+class _MyBusinessesPageState extends ConsumerState<MyBusinessesPage> {
   int _currentIndex = 2; // Negocio está activo
 
-  // Lista de negocios de ejemplo
-  final List<Map<String, String>> _businesses = [
-    {
-      'name': 'Maná Coffe',
-      'address': 'Calle Principal 123',
-      'phone': '987654321',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Cargar negocios cuando se inicia la página
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(businessStateProvider.notifier).loadBusinesses();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final businessState = ref.watch(businessStateProvider);
+    final businesses = businessState.businesses;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1E8), // Beige claro
       appBar: AppBar(
@@ -49,12 +54,17 @@ class _MyBusinessesPageState extends State<MyBusinessesPage> {
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const CreateBusinessPage(),
             ),
           );
+          
+          // Si se creó un negocio exitosamente, recargar la lista
+          if (result == true) {
+            ref.read(businessStateProvider.notifier).loadBusinesses();
+          }
         },
         backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
         child: const Icon(
@@ -62,37 +72,61 @@ class _MyBusinessesPageState extends State<MyBusinessesPage> {
           color: Colors.white,
         ),
       ),
-      body: _businesses.isEmpty
-          ? _EmptyBusinessesView(
-              onCreateBusiness: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const CreateBusinessPage(),
-                  ),
-                );
-              },
+      body: businessState.isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF4A2C1A),
+              ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(24.0),
-              itemCount: _businesses.length,
-              itemBuilder: (context, index) {
-                final business = _businesses[index];
-                return _BusinessCard(
-                  name: business['name']!,
-                  address: business['address']!,
-                  phone: business['phone']!,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => BusinessDetailsPage(
-                          businessName: business['name']!,
-                        ),
+          : businessState.error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Error: ${businessState.error}',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
                       ),
-                    );
-                  },
-                );
-              },
-            ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          ref.read(businessStateProvider.notifier).loadBusinesses();
+                        },
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              : businesses.isEmpty
+                  ? const _EmptyBusinessesView()
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        await ref.read(businessStateProvider.notifier).loadBusinesses();
+                      },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(24.0),
+                        itemCount: businesses.length,
+                        itemBuilder: (context, index) {
+                          final business = businesses[index];
+                          return _BusinessCard(
+                            name: business.name,
+                            address: business.address,
+                            phone: business.phone,
+                            logo: business.logo,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => BusinessDetailsPage(
+                                    businessName: business.name,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFF5F1E8), // Beige claro
@@ -148,11 +182,7 @@ class _MyBusinessesPageState extends State<MyBusinessesPage> {
 }
 
 class _EmptyBusinessesView extends StatelessWidget {
-  final VoidCallback onCreateBusiness;
-
-  const _EmptyBusinessesView({
-    required this.onCreateBusiness,
-  });
+  const _EmptyBusinessesView();
 
   @override
   Widget build(BuildContext context) {
@@ -186,45 +216,12 @@ class _EmptyBusinessesView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Crea tu primer negocio para comenzar',
+              'Usa el botón + para crear tu primer negocio',
               style: TextStyle(
                 fontSize: 16,
                 color: Color(0xFF5A5A5A), // Gris oscuro
               ),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: onCreateBusiness,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.add_business,
-                      size: 20,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Crear mi Primer Negocio',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
@@ -237,12 +234,14 @@ class _BusinessCard extends StatelessWidget {
   final String name;
   final String address;
   final String phone;
+  final String? logo;
   final VoidCallback onTap;
 
   const _BusinessCard({
     required this.name,
     required this.address,
     required this.phone,
+    this.logo,
     required this.onTap,
   });
 
@@ -266,24 +265,7 @@ class _BusinessCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4A2C1A), // Marrón oscuro
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Text(
-                    'Maná',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFF5F1E8), // Beige claro
-                    ),
-                  ),
-                ),
-              ),
+              ImageHelpers.buildBusinessLogo(logo, size: 60),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../config/env.dart';
+import 'interceptors.dart';
 
 class DioClient {
   static Dio? _instance;
@@ -16,6 +17,8 @@ class DioClient {
         },
       ),
     );
+    
+    _instance!.interceptors.add(AuthInterceptor());
     
     return _instance!;
   }

@@ -1,18 +1,27 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/utils/helpers.dart';
+import '../providers/business_provider.dart';
 
-class CreateBusinessPage extends StatefulWidget {
+class CreateBusinessPage extends ConsumerStatefulWidget {
   const CreateBusinessPage({super.key});
 
   @override
-  State<CreateBusinessPage> createState() => _CreateBusinessPageState();
+  ConsumerState<CreateBusinessPage> createState() => _CreateBusinessPageState();
 }
 
-class _CreateBusinessPageState extends State<CreateBusinessPage> {
+class _CreateBusinessPageState extends ConsumerState<CreateBusinessPage> {
   final _businessNameController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _typeController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
+  
+  XFile? _selectedImage;
+  String? _logoBase64;
 
   @override
   void dispose() {
@@ -59,9 +68,7 @@ class _CreateBusinessPageState extends State<CreateBusinessPage> {
             // Logo del negocio
             Center(
               child: GestureDetector(
-                onTap: () {
-                  // TODO: Implementar selección de logo
-                },
+                onTap: _selectLogo,
                 child: Container(
                   width: 120,
                   height: 120,
@@ -73,24 +80,33 @@ class _CreateBusinessPageState extends State<CreateBusinessPage> {
                     ),
                     color: Colors.white,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.camera_alt,
-                        color: Color(0xFF4A2C1A),
-                        size: 32,
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Logo',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF5A5A5A),
+                  child: _selectedImage != null
+                      ? ClipOval(
+                          child: Image.file(
+                            File(_selectedImage!.path),
+                            width: 120,
+                            height: 120,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.camera_alt,
+                              color: Color(0xFF4A2C1A),
+                              size: 32,
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Logo',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF5A5A5A),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -132,10 +148,7 @@ class _CreateBusinessPageState extends State<CreateBusinessPage> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Implementar lógica de creación
-                  Navigator.of(context).pop();
-                },
+                onPressed: _handleCreateBusiness,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4A2C1A), // Marrón oscuro
                   foregroundColor: Colors.white,
@@ -144,13 +157,22 @@ class _CreateBusinessPageState extends State<CreateBusinessPage> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Crear Negocio',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: ref.watch(businessStateProvider).isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Crear Negocio',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 24),
@@ -158,6 +180,156 @@ class _CreateBusinessPageState extends State<CreateBusinessPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleCreateBusiness() async {
+    // Validar campos requeridos
+    if (_businessNameController.text.trim().isEmpty ||
+        _typeController.text.trim().isEmpty ||
+        _phoneController.text.trim().isEmpty ||
+        _addressController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor completa todos los campos requeridos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      await ref.read(businessStateProvider.notifier).createBusiness(
+            name: _businessNameController.text.trim(),
+            type: _typeController.text.trim(),
+            phone: _phoneController.text.trim(),
+            address: _addressController.text.trim(),
+            description: _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+            logo: _logoBase64,
+          );
+
+      if (mounted) {
+        Navigator.of(context).pop(true); // Retornar true para indicar éxito
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.toString().replaceAll('Exception: ', ''),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _selectLogo() async {
+    try {
+      // Mostrar opciones: Cámara o Galería
+      final ImageSource? source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Tomar foto'),
+                onTap: () => Navigator.of(context).pop(ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Elegir de la galería'),
+                onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (source == null) return;
+
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 50, // Calidad reducida para menor tamaño
+        maxWidth: 400, // Tamaño máximo más pequeño
+        maxHeight: 400, // Tamaño máximo más pequeño
+      );
+
+      if (image != null) {
+        // Verificar tamaño del archivo (máximo 2MB antes de base64)
+        final file = File(image.path);
+        final fileSize = await file.length();
+        const maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+        
+        if (fileSize > maxSizeInBytes) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'La imagen es muy grande. Por favor elige una imagen más pequeña.',
+                ),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+
+        setState(() {
+          _selectedImage = image;
+        });
+
+        // Convertir a base64
+        final base64 = await Helpers.imageToBase64(image);
+        if (base64 != null) {
+          // Verificar tamaño del base64 (máximo ~8MB que sería ~6MB después de base64)
+          if (base64.length > 8 * 1024 * 1024) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'La imagen es muy grande incluso después de comprimir. Por favor elige otra imagen.',
+                  ),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+            setState(() {
+              _selectedImage = null;
+              _logoBase64 = null;
+            });
+            return;
+          }
+          
+          setState(() {
+            _logoBase64 = Helpers.formatBase64Image(base64);
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar imagen: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 
