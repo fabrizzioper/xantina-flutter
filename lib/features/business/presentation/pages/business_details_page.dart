@@ -4,11 +4,9 @@ import 'add_members_page.dart';
 import 'business_members_page.dart';
 import '../../../chat/presentation/pages/business_chat_page.dart';
 import '../../../user-auth/presentation/providers/user_auth_provider.dart';
-import '../../../home/presentation/pages/home_page.dart';
 import '../../domain/entities/business.dart';
 import '../../domain/repositories/business_repository.dart';
 import '../../infra/datasources/business_api.dart';
-import '../pages/my_businesses_page.dart';
 
 // Provider para obtener un negocio específico por ID
 final businessByIdProvider = FutureProvider.family<Business?, String>((ref, businessId) async {
@@ -147,44 +145,6 @@ class BusinessDetailsPage extends ConsumerWidget {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F1E8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.only(bottom: 20),
-        child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _BottomNavItem(
-                icon: Icons.home,
-                label: 'Inicio',
-                isActive: false,
-                onTap: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-              ),
-              _BottomNavItem(
-                icon: Icons.business,
-                label: 'Negocio',
-                isActive: true,
-                onTap: () {
-                  // Ya estamos en la página de negocio
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -244,66 +204,6 @@ class _OptionCard extends StatelessWidget {
               Icons.arrow_forward_ios,
               size: 16,
               color: Color(0xFF5A5A5A),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive
-              ? const Color(0xFFF5F1E8)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isActive
-                  ? const Color(0xFF2A1A0A)
-                  : const Color(0xFF5A5A5A),
-            ),
-            const SizedBox(height: 2),
-            Flexible(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: label.length > 12 ? 9 : 11,
-                  color: isActive
-                      ? const Color(0xFF2A1A0A)
-                      : const Color(0xFF5A5A5A),
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
             ),
           ],
         ),

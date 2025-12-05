@@ -242,18 +242,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4A2C1A),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 24,
-                              ),
+                            // Foto de perfil del remitente
+                            ImageHelpers.buildBase64Image(
+                              message.senderImage,
+                              size: 40,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
